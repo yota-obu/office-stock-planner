@@ -1,0 +1,355 @@
+.kd-dialog {
+  --kd-ink: #253646;
+  --kd-sub: #586874;
+  --kd-edge: #dce2e5;
+  --kd-paper: #f5f7f7;
+  box-sizing: border-box;
+  width: min(510px, calc(100vw - 24px));
+  max-height: min(88dvh, 820px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  color: var(--kd-ink);
+  background: white;
+  border: 0;
+  border-radius: 15px;
+  box-shadow: 0 26px 85px #192d4740;
+  font-size: 14px;
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+  scrollbar-width: thin;
+}
+.kd-dialog::backdrop {
+  background: rgb(16 32 48 / 44%);
+  backdrop-filter: blur(3px);
+}
+.kd-dialog[open] {
+  animation: kd-open 0.18s ease-out;
+}
+@keyframes kd-open {
+  from {
+    opacity: 0.7;
+    transform: translateY(6px);
+  }
+}
+.kd-dialog :where(button, input, select) {
+  font: inherit;
+}
+.kd-dialog :focus-visible {
+  outline: 3px solid #bd8133;
+  outline-offset: 2px;
+}
+.kd-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: white;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--kd-edge);
+}
+.kd-head h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 750;
+}
+.kd-head button {
+  display: grid;
+  place-items: center;
+  margin-left: auto;
+  padding: 7px;
+  background: transparent;
+  border: 0;
+  color: var(--kd-sub);
+  border-radius: 7px;
+  cursor: pointer;
+}
+.kd-head button:hover,
+.kd-quiet:hover {
+  background: var(--kd-paper);
+}
+.kd-symbol {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  background: #f2ede5;
+  color: #835b2f;
+  border-radius: 9px;
+}
+.kd-body {
+  padding: 24px;
+}
+.kd-stack {
+  display: grid;
+  gap: 17px;
+}
+.kd-stack p,
+.kd-body > p {
+  margin: 0;
+  color: var(--kd-sub);
+  line-height: 1.75;
+}
+.kd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.kd-split {
+  grid-template-columns: 1fr 1.65fr;
+}
+.kd-field {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  font-weight: 650;
+  font-size: 13px;
+  min-width: 0;
+}
+.kd-field select,
+.kd-number,
+.kd-search {
+  border: 1px solid #b9c3cb;
+  border-radius: 7px;
+  background: white;
+  color: var(--kd-ink);
+  min-height: 42px;
+}
+.kd-field select {
+  padding: 0 10px;
+  width: 100%;
+  font-weight: 500;
+}
+.kd-number,
+.kd-search {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+}
+.kd-number input,
+.kd-search input {
+  border: 0;
+  background: transparent;
+  color: var(--kd-ink);
+  width: 100%;
+  min-width: 0;
+  padding: 8px 0;
+  outline: none;
+}
+.kd-number:focus-within,
+.kd-search:focus-within {
+  outline: 2px solid #bd8133;
+  outline-offset: 1px;
+}
+.kd-number span,
+.kd-dialog small {
+  color: var(--kd-sub);
+  font-size: 12px;
+  font-weight: 500;
+}
+.kd-number span {
+  white-space: nowrap;
+}
+.kd-callout {
+  background: var(--kd-paper);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  font-size: 13px;
+}
+.kd-callout strong {
+  margin-left: 7px;
+}
+.kd-primary,
+.kd-quiet {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  width: 100%;
+  border: 0;
+  border-radius: 7px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.kd-primary {
+  color: white;
+  background: #273b4e;
+}
+.kd-primary:hover:not(:disabled) {
+  background: #374f66;
+}
+.kd-primary:disabled {
+  color: #68727a;
+  background: #e7eaed;
+  cursor: default;
+}
+.kd-quiet {
+  color: #a13936;
+  background: white;
+}
+.kd-product {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.kd-art {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 100px;
+  height: 116px;
+  background: #f4f1ea;
+  border-radius: 9px;
+  padding: 9px;
+}
+.kd-art svg {
+  width: 100%;
+  height: 100%;
+}
+.kd-product h3 {
+  font-size: 20px;
+  line-height: 1.45;
+  margin: 4px 0 8px;
+}
+.kd-product p {
+  font-weight: 700;
+  color: var(--kd-ink);
+}
+.kd-spec,
+.kd-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--kd-edge);
+  border: 1px solid var(--kd-edge);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.kd-spec > div,
+.kd-metrics > div {
+  display: grid;
+  gap: 3px;
+  background: var(--kd-paper);
+  padding: 11px 13px;
+}
+.kd-spec strong,
+.kd-metrics strong {
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+.kd-spec strong small {
+  font-size: 11px;
+}
+.kd-metrics strong {
+  font-size: 24px;
+}
+.kd-details summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.kd-details summary small {
+  margin-left: 5px;
+}
+.kd-details > div {
+  padding-top: 7px;
+}
+.kd-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #405d73;
+  font-size: 13px;
+  text-underline-offset: 3px;
+  width: fit-content;
+}
+.kd-section {
+  border-top: 1px solid var(--kd-edge);
+  padding-top: 18px;
+}
+.kd-total {
+  display: grid;
+  gap: 3px;
+  border-radius: 9px;
+  padding: 18px 20px;
+  background: var(--kd-paper);
+}
+.kd-total > span {
+  font-weight: 650;
+}
+.kd-total strong {
+  font-size: 31px;
+  line-height: 1.3;
+}
+.kd-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--kd-edge);
+  padding: 9px 0;
+}
+.kd-line small {
+  display: block;
+  margin-top: 3px;
+}
+.kd-line > b,
+.kd-line > strong {
+  flex: none;
+}
+.kd-error {
+  margin-top: 14px;
+  padding: 12px 14px;
+  color: #8f3130;
+  background: #fff0ed;
+  border-radius: 7px;
+}
+@media (max-width: 420px) {
+  .kd-head {
+    padding: 15px;
+  }
+  .kd-head h2 {
+    font-size: 18px;
+  }
+  .kd-body {
+    padding: 17px;
+  }
+  .kd-grid {
+    gap: 10px;
+  }
+  .kd-split {
+    grid-template-columns: 1fr 1.4fr;
+  }
+  .kd-art {
+    width: 76px;
+    height: 92px;
+  }
+  .kd-product h3 {
+    font-size: 17px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kd-dialog[open] {
+    animation: none;
+  }
+}
+.kd-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--kd-sub);
+  font-size: 13px;
+  cursor: pointer;
+}
+.kd-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--kd-ink);
+}
