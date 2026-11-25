@@ -2,6 +2,8 @@ import React, { useId } from "react";
 
 // Original vector drawings of the kraft packaging illustrated in KING JIM's series guide.
 const markings = {
+  "SYS-200": ["車載"],
+  "SYS-300": ["車載トイレ"],
   "STKS-100": ["待機〜帰宅", "差し替え式"],
   "STKS-100-BX": ["差し替え", "ボックス"],
   "BCS-500": ["備蓄", "9年保存", "3日分"],
@@ -24,12 +26,138 @@ const markings = {
   "KBG-200": ["吸水バッグ", "10枚入"],
 };
 
+function VehiclePrint({ product, width, height, wide }) {
+  const toilet = product.id === "SYS-300";
+  const title = toilet ? "車載トイレ" : "車載";
+  const english = toilet
+    ? ["In-vehicle", "Survival", "Toilet", "kit"]
+    : ["In-vehicle", "Survival", "kit"];
+  const size = Math.min(width * 0.245, height * 0.117);
+  const cx = width * 0.75;
+  const firstY = height * 0.125;
+  const navy = product.color;
+  return (
+    <g fill={navy} fontFamily="Arial,'Hiragino Kaku Gothic ProN',sans-serif">
+      {wide ? (
+        <g>
+          {english.map((line, i) => (
+            <text
+              key={line}
+              x={width * 0.055}
+              y={height * (0.113 + i * 0.072)}
+              fontSize={height * 0.068}
+              fontWeight="700"
+            >
+              {line}
+            </text>
+          ))}
+          <path
+            d={`M${width * 0.055} ${height * (0.135 + (english.length - 1) * 0.072)}h${width * 0.34}`}
+            stroke={navy}
+            strokeWidth="1"
+          />
+          <text
+            x={width * 0.055}
+            y={height * (0.183 + (english.length - 1) * 0.072)}
+            fontSize={Math.min(width * 0.048, height * 0.038)}
+          >
+            {product.name}
+          </text>
+          <text
+            x={width * 0.95}
+            y={height * 0.08}
+            textAnchor="end"
+            fontSize={height * 0.026}
+            fontWeight="700"
+          >
+            □ KING JIM
+          </text>
+        </g>
+      ) : (
+        <g textAnchor="middle" fontWeight="800">
+          <text x={cx} y={height * 0.091} fontSize={size * 0.45}>
+            非常用
+          </text>
+          <path
+            d={`M ${cx - size * 0.7} ${height * 0.105} h ${size * 1.4}`}
+            stroke={navy}
+            strokeWidth="1"
+          />
+          {Array.from(title).map((c, i) => (
+            <text
+              key={i}
+              x={cx}
+              y={firstY + size * (0.88 + i * 1.03)}
+              fontSize={size}
+            >
+              {c}
+            </text>
+          ))}
+          <text
+            x={cx}
+            y={firstY + size * (0.49 + title.length * 1.03)}
+            fontSize={size * 0.46}
+          >
+            セット
+          </text>
+        </g>
+      )}
+      <svg
+        x={wide ? width * 0.47 : width * 0.15}
+        y={height * 0.6}
+        width={wide ? width * 0.48 : width * 0.79}
+        height={height * 0.29}
+        viewBox="0 0 100 68"
+        preserveAspectRatio="none"
+      >
+        <g fill="none" stroke={navy}>
+          <circle cx="18" cy="18" r="15" strokeWidth="2" />
+          <circle cx="18" cy="18" r="12.5" strokeWidth=".9" />
+          <path d="M18 33V68" strokeWidth="3" />
+        </g>
+        {toilet ? (
+          <g>
+            <text
+              x="18"
+              y="17"
+              textAnchor="middle"
+              fontSize="8"
+              fontWeight="bold"
+            >
+              toilet
+            </text>
+            <path d="M9 20h15l-3 8h-7z" />
+          </g>
+        ) : (
+          <g textAnchor="middle">
+            <text x="18" y="20" fontSize="15" fontWeight="bold">
+              12
+            </text>
+            <text x="18" y="26" fontSize="5">
+              items
+            </text>
+          </g>
+        )}
+        <g transform="translate(36,30)" stroke={navy} strokeWidth="2">
+          <path
+            d="M4 22 11 6q1-3 5-3h25q4 0 5 3l6 16q4 1 4 5v6H1v-6q0-4 3-5ZM5 33v5m46-5v5"
+            fill="none"
+          />
+          <path d="m9 21 6-13h25l7 13Z" />
+          <circle cx="8" cy="27" r="1.7" />
+          <circle cx="48" cy="27" r="1.7" />
+          <path d="M24 29h8" />
+        </g>
+      </svg>
+    </g>
+  );
+}
+
 function Print({ product, width, height, wide, prefix }) {
   const [title, ...tags] = markings[product.id] || [product.name];
   const refill = product.id === "STKS-100-BX";
   const vehicle = product.id.startsWith("SYS-");
   const ink = vehicle ? "#284970" : "#453224";
-  const vehicleFront = vehicle && width === Math.max(product.w, product.d);
   const font = Math.min(
     height * 0.081,
     width * 0.63,
@@ -61,51 +189,12 @@ function Print({ product, width, height, wide, prefix }) {
         strokeWidth="2"
       />
       {vehicle ? (
-        <g fill={ink} fontFamily="Arial,sans-serif" fontWeight="700">
-          {vehicleFront ? (
-            <g>
-              {[
-                "In-vehicle",
-                "Survival",
-                ...(product.id === "SYS-300" ? ["Toilet"] : []),
-                "kit",
-              ].map((line, i) => (
-                <text
-                  key={line}
-                  x={width * 0.06}
-                  y={height * 0.115 + i * height * 0.071}
-                  fontSize={height * 0.071}
-                >
-                  {line}
-                </text>
-              ))}
-              <svg
-                x={width * 0.53}
-                y={height * 0.47}
-                width={width * 0.42}
-                height={height * 0.28}
-                viewBox="0 0 64 40"
-              >
-                <path
-                  d="M9 21 16 6 Q17 3 22 3 H44 Q48 3 50 7 L56 21 Q60 22 60 27 V33 H4 V26 Q4 22 9 21Z M9 33 V38 M55 33 V38"
-                  fill="none"
-                  stroke={ink}
-                  strokeWidth="2.8"
-                />
-                <path d="M13 21 20 8 H45 L52 21Z" fill={ink} />
-                <circle cx="13" cy="27" r="2.1" />
-                <circle cx="51" cy="27" r="2.1" />
-              </svg>
-            </g>
-          ) : (
-            <text
-              transform={`translate(${width * 0.49},${height * 0.06}) rotate(90)`}
-              fontSize={Math.min(width * 0.22, height * 0.052)}
-            >
-              In-vehicle Survival {product.id === "SYS-300" ? "Toilet " : ""}kit
-            </text>
-          )}
-        </g>
+        <VehiclePrint
+          product={product}
+          width={width}
+          height={height}
+          wide={wide}
+        />
       ) : (
         <g
           fill={ink}
@@ -154,32 +243,34 @@ function Print({ product, width, height, wide, prefix }) {
             })}
         </g>
       )}
-      <g fill={ink} fontFamily="Arial,sans-serif" fontWeight="700">
-        {wide && (
+      {!vehicle && (
+        <g fill={ink} fontFamily="Arial,sans-serif" fontWeight="700">
+          {wide && (
+            <text
+              x={width * 0.935}
+              y={height * 0.069}
+              textAnchor="end"
+              fontSize={height * 0.025}
+            >
+              ♔ KING JIM
+            </text>
+          )}
           <text
-            x={width * 0.935}
-            y={height * 0.069}
-            textAnchor="end"
-            fontSize={height * 0.025}
+            x={width / 2}
+            y={height * 0.658}
+            fontSize={Math.min(height * 0.024, width * 0.088)}
+            textAnchor="middle"
           >
-            ♔ KING JIM
+            KING JIM
           </text>
-        )}
-        <text
-          x={width / 2}
-          y={height * 0.658}
-          fontSize={Math.min(height * 0.024, width * 0.088)}
-          textAnchor="middle"
-        >
-          KING JIM
-        </text>
-      </g>
+        </g>
+      )}
       {!refill && (
         <rect
           x={left / 2}
-          y={height * 0.68}
+          y={height * (vehicle ? 0.855 : 0.68)}
           width={width - left}
-          height={height * 0.312}
+          height={height * (vehicle ? 0.137 : 0.312)}
           fill={`url(#${prefix}stripe)`}
         />
       )}
@@ -238,7 +329,9 @@ export default function ProductArt({
         width="30"
         height="30"
         patternUnits="userSpaceOnUse"
-        patternTransform="rotate(-43)"
+        patternTransform={
+          product.id.startsWith("SYS-") ? "rotate(37)" : "rotate(-43)"
+        }
       >
         <rect width="14" height="30" fill={color} />
       </pattern>

@@ -439,11 +439,12 @@ export const products = [
     units: itemUnits,
   },
   {
+    // 公式外寸 W222×D68×H156。日本語の背表紙が正面を向くよう水平に90度回して収納。
     id: "SYS-200",
     name: "非常用車載セット",
-    w: 222,
+    w: 68,
     h: 156,
-    d: 68,
+    d: 222,
     price: 4070,
     color: "#284970",
     category: "車載用",

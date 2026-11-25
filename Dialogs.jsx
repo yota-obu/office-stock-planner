@@ -155,7 +155,7 @@ function Product({ dialog, plan, accept }) {
   const p = byId(dialog.id);
   const placed = Number.isInteger(dialog.row) && Number.isInteger(dialog.index);
   const [dest, setDest] = useState(placed ? String(dialog.row) : "");
-  const [qty, setQty] = useState("1");
+  const [qty, setQty] = useState(String(dialog.qty || 1));
   if (!p) return <p>製品が見つかりません。</p>;
   return (
     <div className="kd-stack">

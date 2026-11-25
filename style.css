@@ -962,3 +962,125 @@ h1 {
 .fullscreen .capacity {
   display: none;
 }
+.qtytools {
+  display: grid;
+  justify-items: stretch;
+  gap: 4px;
+}
+.qtystep {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccd6ca;
+  border-radius: 5px;
+  background: white;
+  height: 25px;
+}
+.qtystep button {
+  padding: 0 4px;
+  font-size: 13px;
+}
+.qtystep input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+  border: 0;
+  width: 26px;
+  text-align: center;
+  font-size: 11px;
+}
+.qtystep input::-webkit-inner-spin-button {
+  appearance: none;
+}
+.qtytools .quickadd {
+  width: auto;
+  font-size: 10px;
+  background: #f0f4ed;
+}
+.dragghost {
+  position: fixed;
+  left: -9000px;
+  top: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  pointer-events: none;
+}
+.dragghost b {
+  color: white;
+  background: #294b37;
+  border-radius: 4px;
+  padding: 2px 5px;
+  font: 600 13px Arial;
+}
+.shelftools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px 10px;
+  flex-wrap: wrap;
+}
+.shelftools button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #d5ded2;
+  border-radius: 5px;
+  font-size: 11px;
+  padding: 6px 8px;
+}
+.shelftools .proposal {
+  margin-left: auto;
+  background: #2d4e3b;
+  color: #fff;
+}
+.shelfscroll {
+  padding: 30px 0 16px;
+}
+.diagram {
+  width: calc(
+    min(76%, (clamp(345px, 33vw, 545px) - 155px) * var(--ratio)) * var(--zoom)
+  );
+}
+.widthmeasure {
+  top: -15px;
+}
+.fullscreen .shelfscroll {
+  padding-top: 33px;
+}
+@media (max-width: 720px) {
+  .diagram {
+    width: calc(
+      min(76%, (clamp(290px, 75vw, 440px) - 150px) * var(--ratio)) * var(--zoom)
+    );
+  }
+}
+.spine,
+.thumb {
+  touch-action: none;
+}
+.qtystep input:focus {
+  outline: 2px solid #bb864f;
+  outline-offset: -1px;
+}
+.dragghost {
+  z-index: 11;
+}
+.productopen:hover .thumb {
+  background: #edf1e8;
+}
+.migration {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fbf4e6;
+  border: 1px solid #e6d5aa;
+  padding: 10px 14px;
+  border-radius: 7px;
+  margin-bottom: 14px;
+  font-size: 12px;
+}
+.migration svg {
+  flex: none;
+}
+.migration button {
+  margin-left: auto;
+}
