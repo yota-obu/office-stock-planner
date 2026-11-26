@@ -154,7 +154,7 @@ const sections = {
 };
 const tabs = Object.keys(sections);
 
-export default function Guide({ initialTab, onClose }) {
+export default function Guide({ initialTab, pageTitle, onClose }) {
   const [active, setActive] = useState(() =>
     tabs.includes(initialTab) ? initialTab : "diagnosis",
   );
@@ -197,47 +197,51 @@ export default function Guide({ initialTab, onClose }) {
         <header>
           <div>
             <BookOpen size={23} />
-            <h2 id={prefix + "heading"}>使い方ガイド</h2>
+            <h2 id={prefix + "heading"}>
+              {pageTitle ? pageTitle + "の使い方" : "使い方ガイド"}
+            </h2>
           </div>
           <button type="button" aria-label="ガイドを閉じる" onClick={onClose}>
             <X size={21} />
           </button>
         </header>
-        <div
-          className="guideTabs"
-          role="tablist"
-          aria-label="使い方ガイドの項目"
-        >
-          {tabs.map((id, i) => {
-            const { title, icon: Icon } = sections[id];
-            return (
-              <button
-                type="button"
-                key={id}
-                id={prefix + id}
-                role="tab"
-                aria-selected={id === active}
-                aria-controls={prefix + "panel" + id}
-                tabIndex={id === active ? 0 : -1}
-                ref={(el) => {
-                  buttons.current[i] = el;
-                }}
-                onKeyDown={(e) => navigate(e, i)}
-                onClick={() => setActive(id)}
-              >
-                <Icon size={16} />
-                {title}
-              </button>
-            );
-          })}
-        </div>
-        {tabs.map((id) => (
+        {!pageTitle && (
+          <div
+            className="guideTabs"
+            role="tablist"
+            aria-label="使い方ガイドの項目"
+          >
+            {tabs.map((id, i) => {
+              const { title, icon: Icon } = sections[id];
+              return (
+                <button
+                  type="button"
+                  key={id}
+                  id={prefix + id}
+                  role="tab"
+                  aria-selected={id === active}
+                  aria-controls={prefix + "panel" + id}
+                  tabIndex={id === active ? 0 : -1}
+                  ref={(el) => {
+                    buttons.current[i] = el;
+                  }}
+                  onKeyDown={(e) => navigate(e, i)}
+                  onClick={() => setActive(id)}
+                >
+                  <Icon size={16} />
+                  {title}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {(pageTitle ? [active] : tabs).map((id) => (
           <section
-            role="tabpanel"
+            role={pageTitle ? undefined : "tabpanel"}
             hidden={active !== id}
             tabIndex={0}
             id={prefix + "panel" + id}
-            aria-labelledby={prefix + id}
+            aria-labelledby={pageTitle ? prefix + "heading" : prefix + id}
             key={id}
           >
             {active === id && (

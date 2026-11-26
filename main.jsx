@@ -638,7 +638,7 @@ function App() {
                   className="pageHelp"
                   aria-label={titles[page] + "の使い方"}
                   title="このページの使い方"
-                  onClick={() => D({ type: "help" })}
+                  onClick={() => D({ type: "help", pageOnly: true })}
                 >
                   <CircleHelp size={20} />
                 </button>
@@ -1118,7 +1118,11 @@ function App() {
           </section>
         </div>
       ) : dialog?.type === "help" ? (
-        <Guide initialTab={page} onClose={() => D(null)} />
+        <Guide
+          initialTab={page}
+          pageTitle={dialog.pageOnly ? titles[page] : undefined}
+          onClose={() => D(null)}
+        />
       ) : (
         <Dialogs
           dialog={dialog}
