@@ -35,7 +35,7 @@ export function TierControl({ plan, commit }) {
 }
 export function Dimension({ axis, plan, commit }) {
   const value = plan.config[axis],
-    label = { width: "内幅", height: "合計内高", depth: "奥行" }[axis];
+    label = { width: "内幅", height: "合計内高" }[axis];
   const [draft, setDraft] = useState(String(value));
   useEffect(() => setDraft(String(value)), [value]);
   function apply() {

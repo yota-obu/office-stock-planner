@@ -1,0 +1,135 @@
+.guideDialog {
+  border: 1px solid #ced8cf;
+  border-radius: 16px;
+  padding: 0;
+  width: min(680px, 94vw);
+  max-height: 86dvh;
+  color: #273a30;
+  background: #fff;
+  box-shadow: 0 20px 90px #18291d38;
+}
+.guideDialog::backdrop {
+  background: #152b2380;
+  backdrop-filter: blur(3px);
+}
+.guideInner header,
+.guideInner header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.guideInner header {
+  justify-content: space-between;
+  padding: 20px 25px;
+  background: #f2f6ef;
+  color: #324f3a;
+}
+.guideInner h2,
+.guideInner h3,
+.guideInner h4 {
+  margin: 0;
+}
+.guideInner h2 {
+  font-size: 21px;
+}
+.guideInner header button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e5ede2;
+}
+.guideInner .guideTabs {
+  display: flex;
+  padding: 10px 16px 0;
+  gap: 3px;
+  border-bottom: 1px solid #dce4da;
+  overflow-x: auto;
+}
+.guideInner .guideTabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex: 1;
+  padding: 11px 5px;
+  font-size: 13px;
+  border-bottom: 3px solid transparent;
+}
+.guideInner .guideTabs button[aria-selected="true"] {
+  border-color: #48724c;
+  color: #315d36;
+  font-weight: 700;
+}
+.guideInner section {
+  padding: 24px;
+}
+.guideInner h3 {
+  font-size: 17px;
+}
+.guideInner ol {
+  counter-reset: steps;
+  list-style: none;
+  padding: 0;
+  margin: 19px 0 0;
+}
+.guideInner li {
+  position: relative;
+  padding: 0 0 16px 38px;
+  counter-increment: steps;
+}
+.guideInner li:before {
+  content: counter(steps);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #e8f0e4;
+  color: #416043;
+  width: 26px;
+  height: 26px;
+  font-weight: 700;
+  font-size: 13px;
+}
+.guideInner h4,
+.guideInner summary {
+  font-size: 14px;
+}
+.guideInner p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #516158;
+}
+.guideInner details {
+  border-bottom: 1px solid #dbe5db;
+  padding: 12px 0;
+}
+.guideInner summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 650;
+}
+.guideInner details[open] summary svg {
+  transform: rotate(180deg);
+}
+@media (max-width: 520px) {
+  .guideInner .guideTabs button {
+    flex-direction: column;
+    font-size: 11px;
+  }
+  .guideInner .guideTabs {
+    padding: 6px 7px 0;
+  }
+  .guideInner section,
+  .guideInner header {
+    padding: 17px;
+  }
+}

@@ -17,11 +17,9 @@ export default function WidthCalculator({ plan, onShelf }) {
     ({ qty }) => Number.isInteger(qty) && qty >= 1 && qty <= 99999,
   );
   const total = entries.reduce((n, { p, qty }) => n + p.w * qty, 0);
-  const { width, height, levels, depth } = plan.config;
+  const { width, height, levels } = plan.config;
   const perRow = Math.floor(width / p.w);
-  const fits = entries.every(
-    ({ p }) => p.h <= height / levels && p.d <= depth && p.w <= width,
-  );
+  const fits = entries.every(({ p }) => p.h <= height / levels && p.w <= width);
   const remainingProduct = products.find(
     (p) => !lines.some((l) => l.id === p.id),
   );

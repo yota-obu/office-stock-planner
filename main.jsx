@@ -28,7 +28,6 @@ import {
   CircleHelp,
   Menu,
   X,
-  Layers3,
 } from "lucide-react";
 import { products } from "./catalog.js";
 import {
@@ -38,9 +37,9 @@ import {
   add,
   summarize,
   applyRecommendations,
-  summarizeContents,
 } from "./engine.js";
 import WidthCalculator from "./WidthCalculator.jsx";
+import Guide from "./Guide.jsx";
 import Diagnosis from "./Diagnosis.jsx";
 import ProposalDialog from "./ProposalDialog.jsx";
 import Dialogs from "./Dialogs.jsx";
@@ -178,10 +177,6 @@ function App() {
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
   }, []);
-  const contents = summarizeContents(plan);
-  const highlights = ["toilet", "meals", "water", "snacks", "blankets"]
-    .map((key) => contents.find((g) => g.key === key))
-    .filter(Boolean);
   const stats = summarize(plan),
     cfg = plan.config,
     visible = products.filter(
@@ -192,7 +187,6 @@ function App() {
           .toLowerCase()
           .includes(query.trim().toLowerCase()),
     );
-  const [itemsOpen, setItemsOpen] = useState(false);
   const shelfView = useRef(null),
     scrollToNew = useRef(false);
   const racks = plan.rows.length / cfg.levels;
@@ -638,7 +632,17 @@ function App() {
               <Menu />
             </button>
             <div>
-              <h1>{titles[page]}</h1>
+              <div className="pageHeading">
+                <h1>{titles[page]}</h1>
+                <button
+                  className="pageHelp"
+                  aria-label={titles[page] + "の使い方"}
+                  title="このページの使い方"
+                  onClick={() => D({ type: "help" })}
+                >
+                  <CircleHelp size={20} />
+                </button>
+              </div>
               <p>{descriptions[page]}</p>
             </div>
           </div>
@@ -680,32 +684,15 @@ function App() {
                     "orange",
                     "estimate",
                   ],
-                  [
-                    Boxes,
-                    "内容物の内訳",
-                    [
-                      ...highlights,
-                      ...contents.filter((g) => !highlights.includes(g)),
-                    ]
-                      .slice(0, 2)
-                      .map((g) => (
-                        <span key={g.key}>
-                          {g.label}{" "}
-                          <b>
-                            {money(g.count)}
-                            {g.unit}
-                          </b>
-                        </span>
-                      )),
-                    "",
-                    "purple",
-                    "items",
-                  ],
+                  [Boxes, "内容物の内訳", null, "", "purple", "items"],
                 ].map(([I, label, value, unit, color, target]) => {
                   const Tile = target ? "button" : "div";
                   return (
                     <Tile
-                      className="metricTile"
+                      className={
+                        "metricTile" +
+                        (target === "items" ? " detailsTile" : "")
+                      }
                       key={label}
                       onClick={!target ? undefined : () => D({ type: target })}
                     >
@@ -714,10 +701,7 @@ function App() {
                       </span>
                       <span className="metriclabel">{label}</span>
                       {target === "items" ? (
-                        <div className="metricContents">
-                          {contents.length ? value : "未配置"}
-                          <ChevronRight size={13} />
-                        </div>
+                        <ChevronRight className="metricArrow" size={15} />
                       ) : (
                         <strong>
                           {value} <small>{unit}</small>
@@ -726,6 +710,13 @@ function App() {
                     </Tile>
                   );
                 })}
+                <button
+                  className="proposalAction"
+                  onClick={() => D({ type: "proposal" })}
+                >
+                  <FileText size={20} />
+                  提案書を作成
+                </button>
               </div>
               <div className="work">
                 <section
@@ -964,25 +955,12 @@ function App() {
                       </button>
                     </div>
                   </div>
-                  <div className="canvasfoot">
-                    <span>
-                      <Layers3 size={15} />
-                      {cfg.levels}段ラック × {racks}台
-                    </span>
-                    <span>
-                      {racks > 1 && (
-                        <>
-                          <Dimension axis="width" plan={plan} commit={commit} />
-                          <Dimension
-                            axis="height"
-                            plan={plan}
-                            commit={commit}
-                          />
-                        </>
-                      )}
-                      <Dimension axis="depth" plan={plan} commit={commit} />
-                    </span>
-                  </div>
+                  {racks > 1 && (
+                    <div className="canvasfoot">
+                      <Dimension axis="width" plan={plan} commit={commit} />
+                      <Dimension axis="height" plan={plan} commit={commit} />
+                    </div>
+                  )}
                   {racks > 1 && (
                     <div className="rackNav">
                       <button
@@ -1062,46 +1040,9 @@ function App() {
                       ? "棚の外で離すと取り出します。"
                       : "背表紙をクリックして複数選択し、まとめてドラッグできます。"}
                   </div>
-                  <div className="proposalFooter">
-                    <button
-                      className="primary"
-                      onClick={() => D({ type: "proposal" })}
-                    >
-                      <FileText size={16} />
-                      提案書を作成
-                    </button>
-                  </div>
                 </section>
                 {catalog}
               </div>
-              <section className="panel stockItems">
-                <h2 className="stockHeading">
-                  <button
-                    aria-expanded={itemsOpen}
-                    aria-controls="stock-contents"
-                    onClick={() => setItemsOpen(!itemsOpen)}
-                  >
-                    <Boxes size={18} />
-                    アイテム別の合計数量
-                    <ChevronDown size={16} />
-                  </button>
-                </h2>
-                <div id="stock-contents" hidden={!itemsOpen}>
-                  {contents
-                    .flatMap((group) => group.items)
-                    .map((item) => (
-                      <span key={item.name}>
-                        {item.name}{" "}
-                        <b>
-                          {money(item.count)} {item.unit}
-                        </b>
-                      </span>
-                    ))}
-                  {!contents.length && (
-                    <p>製品を配置すると、ここに内容物と数量が表示されます。</p>
-                  )}
-                </div>
-              </section>
             </>
           )}
         </div>
@@ -1149,7 +1090,7 @@ function App() {
             </h2>
             <p>
               {dialog.type === "reset"
-                ? `配置を空にし、幅 ${money(defaultConfig.width)} × 高さ ${defaultConfig.height} × 奥行 ${defaultConfig.depth} mm、${defaultConfig.levels}段の棚1台に戻します。`
+                ? `配置を空にし、幅 ${money(defaultConfig.width)} × 高さ ${defaultConfig.height} mm、${defaultConfig.levels}段の棚1台に戻します。`
                 : `配置中の${stats.count}セットをすべて取り出します。棚の寸法と段数は引き続き使えます。`}
             </p>
             <button autoFocus className="smallbutton" onClick={() => D(null)}>
@@ -1177,20 +1118,7 @@ function App() {
           </section>
         </div>
       ) : dialog?.type === "help" ? (
-        <div className="helpback" onClick={() => D(null)}>
-          <section className="help" role="dialog" aria-modal="true">
-            <h2>使い方ガイド</h2>
-            <p>
-              寸法欄をクリックして直接入力し、＋・−で段数を調整します。商品欄の＋・−で数量を選んで、製品の絵を棚にドラッグしてください。数字を直接入力することもできます。
-            </p>
-            <p>
-              背表紙をクリックすると選択できます。異なる製品や別の段の製品も一緒に選び、選んだ背表紙をつかんで移動できます。棚の外に離すと取り出します。「ひとつ前に戻る」で取り出す前の状態に戻せます。
-            </p>
-            <button className="primary" autoFocus onClick={() => D(null)}>
-              閉じる
-            </button>
-          </section>
-        </div>
+        <Guide initialTab={page} onClose={() => D(null)} />
       ) : (
         <Dialogs
           dialog={dialog}

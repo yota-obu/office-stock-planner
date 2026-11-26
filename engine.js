@@ -7,13 +7,11 @@ export const used = (row) => row.reduce((width, id) => width + byId(id).w, 0);
 export const defaultConfig = {
   width: 1050,
   height: 1360,
-  depth: 350,
   levels: 4,
 };
 export const limits = {
   width: [50, 4000],
   height: [50, 4000],
-  depth: [50, 1500],
   levels: [1, 5],
 };
 
@@ -30,7 +28,7 @@ function validConfig(config) {
 }
 
 const compatible = (product, config) =>
-  product.h <= config.height / config.levels && product.d <= config.depth;
+  product.h <= config.height / config.levels;
 const rowExists = (plan, row) =>
   Number.isInteger(row) && row >= 0 && row < plan.rows.length;
 export const rackCount = (plan) => plan.rows.length / plan.config.levels;
@@ -64,8 +62,7 @@ export function add(plan, id, qty = 1, row = null) {
   if (!compatible(product, plan.config))
     return {
       plan,
-      error:
-        "製品の高さまたは奥行が棚の内寸を超えています。棚設定をご確認ください。",
+      error: "製品の高さが1段の内高を超えています。棚設定をご確認ください。",
     };
 
   const available = plan.rows.map((ids, index) =>
@@ -192,14 +189,14 @@ export function applyRecommendations(plan, lines) {
   }
   if (!counts.size)
     return { plan, error: "数量が1以上の製品を選んでください。" };
-  const { width, height, levels, depth } = plan.config;
+  const { width, height, levels } = plan.config;
   const tierHeight = height / levels;
   const ordered = [...counts].sort(([a], [b]) => byId(b).w - byId(a).w);
   const rows = Array.from({ length: levels }, () => []);
   const vacancies = rows.map(() => width);
   for (const [id, quantity] of ordered) {
     const product = byId(id);
-    if (product.w > width || product.h > tierHeight || product.d > depth) {
+    if (product.w > width || product.h > tierHeight) {
       return {
         plan,
         error:
@@ -208,8 +205,6 @@ export function applyRecommendations(plan, lines) {
           product.w +
           " mm・1段の内高 " +
           product.h +
-          " mm・奥行 " +
-          product.d +
           " mm 以上が必要です。棚設定で寸法を広げてください。",
       };
     }

@@ -32,7 +32,7 @@ const names = {
   inventory: "収納セットの内訳",
   product: "製品の詳細",
   estimate: "見積もり",
-  items: "内容品の集計",
+  items: "内容物の内訳",
   capacity: "各段の空きスペース",
 };
 const symbols = {
@@ -234,6 +234,7 @@ function exportEstimate(summary) {
 function Report({ plan, mode }) {
   const summary = summarize(plan);
   const [query, setQuery] = useState("");
+  const [showItems, setShowItems] = useState(false);
   if (mode === "inventory") {
     return (
       <div className="kd-stack">
@@ -300,7 +301,8 @@ function Report({ plan, mode }) {
       </div>
     );
   const term = query.trim().toLowerCase();
-  const groups = summarizeContents(plan)
+  const groups = summarizeContents(plan);
+  const filtered = groups
     .map((group) => ({
       ...group,
       items: group.items.filter((item) =>
@@ -312,58 +314,62 @@ function Report({ plan, mode }) {
     .filter((group) => group.items.length);
   return (
     <div className="kd-stack">
-      <div className="kd-total">
-        <span>収納中の全セットの内容品</span>
-        <strong>
-          {format(summary.itemCount)} <small>点</small>
-        </strong>
-        <small>
-          {summary.items.length} 種類 ・ {format(summary.count)}{" "}
-          セット分（同梱単位）
-        </small>
-      </div>
-      <label className="kd-search">
-        <Search size={16} />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="内容品を検索"
-          placeholder="用途・内容品名で検索"
-        />
-      </label>
+      <p>棚に収納した {format(summary.count)} セットの分類別合計</p>
       {groups.map((group) => (
-        <details
-          className="kd-content-group"
-          key={group.key + ":" + term}
-          open={term ? true : undefined}
-        >
-          <summary>
-            <strong>{group.label}</strong>
-            <b>
-              {format(group.count)} {group.unit}
-            </b>
-          </summary>
-          <p>{group.description}</p>
-          {group.items.map((item) => (
-            <div className="kd-line" key={item.name}>
-              <span>
-                {item.name}
-                <small>{item.description}</small>
-              </span>
-              <b>
-                {format(item.count)} {item.unit}
-              </b>
-            </div>
-          ))}
-        </details>
+        <div className="kd-line" key={group.key}>
+          <span>{group.label}</span>
+          <b>
+            {format(group.count)} {group.unit}
+          </b>
+        </div>
       ))}
       {!groups.length && (
-        <p>
-          {summary.count
-            ? "該当する内容品はありません。"
-            : "棚に製品を追加すると、用途ごとの備蓄量を確認できます。"}
-        </p>
+        <p>棚に製品を追加すると、用途ごとの備蓄量を確認できます。</p>
       )}
+      {groups.length > 0 && (
+        <button
+          type="button"
+          className="kd-quiet"
+          aria-expanded={showItems}
+          aria-controls="kd-item-list"
+          onClick={() => setShowItems((v) => !v)}
+        >
+          アイテム別の合計数量{" "}
+          <span aria-hidden="true">{showItems ? "−" : "＋"}</span>
+        </button>
+      )}
+      <div id="kd-item-list" hidden={!showItems}>
+        {showItems && (
+          <>
+            <label className="kd-search">
+              <Search size={16} />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="内容品を検索"
+                placeholder="用途・内容品名で検索"
+              />
+            </label>
+            {filtered.map((group) => (
+              <section className="kd-item-group" key={group.key}>
+                <h3>{group.label}</h3>
+                {group.items.map((item) => (
+                  <div className="kd-line" key={item.name}>
+                    <span>
+                      {item.name}
+                      <small>{item.description}</small>
+                    </span>
+                    <b>
+                      {format(item.count)} {item.unit}
+                    </b>
+                  </div>
+                ))}
+              </section>
+            ))}
+            {!filtered.length && <p>該当する内容品はありません。</p>}
+          </>
+        )}
+      </div>
     </div>
   );
 }

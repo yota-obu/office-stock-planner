@@ -145,7 +145,7 @@ function proposalPages(plan, stats, imgs, { recipient, people, days }) {
   });
   const page = pageModel(),
     pages = [page];
-  const { width, height, depth, levels } = plan.config;
+  const { width, height, levels } = plan.config;
   heading(page, "防災備蓄 配置提案書", date);
   const recipientName = String(recipient || "")
     .trim()
@@ -165,7 +165,7 @@ function proposalPages(plan, stats, imgs, { recipient, people, days }) {
   page.text("棚の配置図", 12, 57, 100, 7, 4.5, { bold: true });
   drawShelf(page, plan, imgs, 12, 67, 109, 48);
   page.text(
-    `1台の内寸  幅 ${nf(width)} × 高さ ${nf(height)} × 奥行 ${nf(depth)} mm  /  ${levels}段 × ${Math.ceil(plan.rows.length / levels)}台`,
+    `1台の内寸  幅 ${nf(width)} × 高さ ${nf(height)} mm  /  ${levels}段 × ${Math.ceil(plan.rows.length / levels)}台`,
     12,
     116,
     109,
