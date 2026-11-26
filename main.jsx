@@ -524,9 +524,16 @@ function App() {
                 <ProductArt product={p} />
               </span>
               <span className="productcopy">
-                <small>{p.id}</small>
+                <small>
+                  {p.id}{" "}
+                  {p.discontinued && (
+                    <span className="sale-ended">販売終了</span>
+                  )}
+                </small>
                 <strong>{p.name}</strong>
-                <b>¥{money(p.price)}</b>
+                <b>
+                  {p.discontinued && "最終掲載価格 "}¥{money(p.price)}
+                </b>
               </span>
             </button>
             {page === "shelf" && (
