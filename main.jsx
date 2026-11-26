@@ -508,16 +508,12 @@ function App() {
                 </div>
                 <button
                   className="quickadd"
-                  title={p.name + "の数量を選んで追加"}
+                  title={p.name + "を" + quantity(p.id) + "セット追加"}
                   aria-label={p.name + "を棚に追加"}
-                  onClick={() =>
-                    D({
-                      type: "product",
-                      id: p.id,
-                      qty: quantity(p.id),
-                      readOnly: page === "catalog",
-                    })
-                  }
+                  onClick={() => {
+                    const qty = quantity(p.id);
+                    commit(add(plan, p.id, qty), p.name + "を" + qty + "セット追加しました");
+                  }}
                 >
                   棚に追加
                 </button>
