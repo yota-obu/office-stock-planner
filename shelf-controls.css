@@ -136,3 +136,20 @@
 .rackNav > button {
   min-height: 30px;
 }
+
+/* Reserve a gutter for the full height editor, including its numeric field. */
+.canvaspanel .fitCanvas:not(.multiRack) {
+  --height-editor-width: 60px;
+  padding-inline-end: calc(var(--height-editor-width) + 18px);
+}
+.canvaspanel .heightmeasure {
+  left: calc(100% + 7px);
+  right: auto;
+  width: 0;
+}
+.canvaspanel .heightmeasure .dimension-control {
+  left: 4px;
+  right: auto;
+  width: var(--height-editor-width);
+  box-sizing: border-box;
+}

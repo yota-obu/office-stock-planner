@@ -1,0 +1,42 @@
+.widthRun {
+  margin: 16px 0;
+  min-width: 0;
+}
+.widthRunViewport {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  background: #f4f3ec;
+  border-bottom: 3px solid #978570;
+  scrollbar-color: #899a91 #e6ece6;
+}
+.widthRunViewport:focus-visible {
+  outline: 2px solid #617e6c;
+  outline-offset: 2px;
+}
+.widthRunTrack {
+  position: relative;
+  min-width: 100%;
+  height: 122px;
+}
+.widthRunWindow {
+  position: sticky;
+  left: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.widthRunWindow > div {
+  position: absolute;
+  bottom: 0;
+}
+.widthRun > small {
+  display: block;
+  margin-top: 6px;
+  text-align: right;
+  color: #50645a;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.widthCalc > .wcResult {
+  min-width: 0;
+}

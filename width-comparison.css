@@ -1,0 +1,38 @@
+.width-comparison {
+  border-top: 1px solid #ced9cc;
+  margin-top: 22px;
+  padding-top: 16px;
+}
+.width-comparison h3 {
+  font-size: 15px;
+  margin: 0 0 12px;
+}
+.width-comparison > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(155px, 100%), 1fr));
+  gap: 10px;
+}
+.width-comparison figure {
+  margin: 0;
+  padding: 12px;
+  background: #fffdf5;
+  border: 1px solid #dedfcd;
+  border-radius: 10px;
+}
+.width-comparison svg {
+  width: 100%;
+  height: 70px;
+  display: block;
+}
+.width-comparison figcaption {
+  font-size: 12px;
+  color: #405b50;
+  line-height: 1.6;
+}
+.width-comparison strong,
+.width-comparison small {
+  display: block;
+}
+.width-comparison strong {
+  font-size: 18px;
+}

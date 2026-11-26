@@ -1,8 +1,10 @@
+import WidthRun from "./WidthRun.jsx";
 import React, { useState } from "react";
 import { LibraryBig, Ruler } from "lucide-react";
 import ProductArt from "./ProductArt.jsx";
 import { products } from "./catalog.js";
 import "./width.css";
+import WidthComparison from "./WidthComparison.jsx";
 
 const format = (n) => n.toLocaleString("ja-JP");
 
@@ -158,29 +160,7 @@ export default function WidthCalculator() {
                   " 個"}{" "}
               ＝ <b>{format(total / 1000)} m</b>
             </p>
-            <div className="wcDrawing" aria-hidden="true">
-              {entries.flatMap(({ p, qty }) =>
-                Array.from(
-                  {
-                    length: Math.min(
-                      qty,
-                      Math.max(1, Math.floor(24 / entries.length)),
-                    ),
-                  },
-                  (_, i) => (
-                    <div
-                      key={p.id + i}
-                      style={{ aspectRatio: p.w + "/" + p.h }}
-                    >
-                      <ProductArt product={p} spine />
-                    </div>
-                  ),
-                ),
-              )}
-              {entries.some((e) => e.qty > Math.floor(24 / entries.length)) && (
-                <small>…</small>
-              )}
-            </div>
+            <WidthRun entries={entries} />
             <p className="wcShelfNote">
               {!validWidth ? (
                 "棚の内幅に0より大きい数値を入力すると、必要な段数が表示されます。"
@@ -199,6 +179,7 @@ export default function WidthCalculator() {
                 "入力した棚幅を超える製品があります。"
               )}
             </p>
+            <WidthComparison total={total} />
           </>
         ) : (
           <p className="wcInvalid">数量は1〜99,999の整数で入力してください。</p>
