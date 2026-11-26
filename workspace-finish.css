@@ -1,0 +1,46 @@
+.app > aside {
+  background:
+    radial-gradient(ellipse at 0% 0%, #355e49 0%, transparent 52%),
+    linear-gradient(165deg, #20392f, #172e26);
+  box-shadow: 3px 0 16px #18332913;
+}
+.app nav button.active {
+  background: linear-gradient(100deg, #456a54, #385642);
+  box-shadow:
+    inset 3px 0 #f6c17f,
+    inset 0 0 0 1px #ffffff19;
+}
+.brand svg {
+  filter: drop-shadow(0 3px 4px #111d1838);
+}
+.metrics .metricTile {
+  box-shadow: 0 2px 5px #19352009;
+  background: linear-gradient(145deg, #fff 55%, #f5f8f2);
+}
+.metricicon {
+  box-shadow: inset 0 0 0 1px #243b2f0d;
+}
+.metrics .proposalAction {
+  background: linear-gradient(145deg, #365f48, #254534);
+  box-shadow:
+    inset 0 1px #ffffff2c,
+    0 3px 8px #203c2d24;
+}
+@media (hover: hover) {
+  .metrics .metricTile:hover {
+    border-color: #9db3a1;
+    box-shadow: 0 4px 12px #203c2d14;
+  }
+}
+.spine-picker {
+  box-shadow: 0 24px 70px #102d2540;
+}
+.spine-options button[aria-pressed="true"] {
+  box-shadow: 0 3px 8px #2858391c;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app button,
+  .app article {
+    transition: none;
+  }
+}

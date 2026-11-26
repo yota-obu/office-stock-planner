@@ -1,0 +1,82 @@
+.canvaspanel .canvas {
+  background-color: #f1f4ef;
+  background-image:
+    radial-gradient(circle, #95ab992f 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 42%, #fcfdf9 9%, #eef3eb 72%, #e5ece4);
+  background-size:
+    12px 12px,
+    100% 100%;
+}
+.canvaspanel .rack {
+  border-color: #758174 #626e62 #58665a #808c7e;
+  background: #8c998a;
+  box-shadow:
+    inset 0 1px #e4ebdf,
+    1px 2px 0 #a1ab9d,
+    2px 4px 0 #71806e,
+    3px 8px 12px #27392928,
+    4px 14px 21px -9px #263c2c45;
+}
+.canvaspanel .rack::before,
+.canvaspanel .rack::after {
+  background: linear-gradient(90deg, #788477 5%, #58675a 92%);
+  border-radius: 0 0 2px 2px;
+}
+.canvaspanel .bay {
+  background: linear-gradient(
+    175deg,
+    #bac5b7 0%,
+    #d8dfd3 21%,
+    #e8ece2 85%,
+    #dce3d6 100%
+  );
+  box-shadow:
+    inset 4px 4px 10px #4453402a,
+    inset -2px 0 4px #69786825;
+}
+.canvaspanel .bay + .bay {
+  border-top-color: #899785;
+}
+.canvaspanel .bay::before {
+  background: linear-gradient(#d7dfd0, #b3bfae);
+}
+.canvaspanel .bay.over {
+  outline-color: #327157;
+  background: linear-gradient(165deg, #c6dfc9, #e6f2e3);
+}
+.canvaspanel .spine {
+  filter: drop-shadow(1px 0 0 #59452d5e) drop-shadow(1px 1px 1px #483e2e26);
+}
+.canvaspanel .spine[aria-pressed="true"] {
+  outline: 2px solid #105e45;
+  box-shadow:
+    0 0 0 1px #f5fff6,
+    0 2px 5px #1a4c3240;
+}
+.canvaspanel .spine[aria-pressed="true"]::after {
+  background: #125742;
+  box-shadow:
+    0 0 0 1px #fff,
+    0 1px 3px #193d2c54;
+}
+.canvaspanel .spine:focus-visible {
+  z-index: 2;
+  outline: 3px solid #09634d;
+  outline-offset: 1px;
+}
+.canvaspanel .viewtag,
+.canvaspanel .expand,
+.canvaspanel .zoom {
+  background-color: #fffffff5;
+  border-color: #cdd7c9;
+  box-shadow: 0 2px 6px #384e3910;
+}
+.canvaspanel .rownum {
+  color: #52634e;
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: reduce) {
+  .canvaspanel .spine {
+    transition: none;
+  }
+}

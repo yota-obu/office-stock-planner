@@ -1,0 +1,30 @@
+.shelf-confirmation {
+  width: min(420px, calc(100vw - 36px));
+  margin: auto;
+  padding: 24px;
+  border: 0;
+  border-radius: 12px;
+  color: #253646;
+  box-shadow: 0 16px 48px #152d4938;
+}
+.shelf-confirmation::backdrop {
+  background: #17283a80;
+}
+.shelf-confirmation h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+.shelf-confirmation p {
+  margin: 0 0 20px;
+  line-height: 1.7;
+}
+.shelf-confirmation > div {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.shelftools button[aria-disabled="true"],
+.rackCountGroup button[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: default;
+}

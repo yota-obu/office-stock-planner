@@ -1,3 +1,5 @@
+import CatalogPanel from "./CatalogPanel.jsx";
+import ShelfConfirmation from "./ShelfConfirmation.jsx";
 import { Dimension, TierControl } from "./ShelfControls.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
@@ -43,8 +45,11 @@ import Guide from "./Guide.jsx";
 import Diagnosis from "./Diagnosis.jsx";
 import ProposalDialog from "./ProposalDialog.jsx";
 import Dialogs from "./Dialogs.jsx";
+import SpinePicker from "./SpinePicker.jsx";
 import ProductArt from "./ProductArt.jsx";
 import "./style.css";
+import "./workspace-finish.css";
+import "./shelf-finish.css";
 
 const titles = {
   diagnosis: "備蓄プラン診断",
@@ -80,6 +85,7 @@ function Logo() {
   );
 }
 function App() {
+  const [picker, setPicker] = useState(null);
   const [compact, setCompact] = useState(
     () => window.matchMedia("(max-width:940px)").matches,
   );
@@ -168,7 +174,7 @@ function App() {
 
   useEffect(() => {
     function esc(e) {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && !document.querySelector("dialog[open]")) {
         F(false);
         N(false);
         D(null);
@@ -402,7 +408,7 @@ function App() {
     ["catalog", LibraryBig, "製品カタログ"],
   ];
   const catalog = (
-    <section className={"catalog panel " + (page === "catalog" ? "wide" : "")}>
+    <CatalogPanel expanded={page === "catalog"}>
       <div className="panelheading">
         <h2>
           <LibraryBig />
@@ -446,6 +452,7 @@ function App() {
             }}
             key={p.id}
             className="product"
+            style={page === "catalog" ? { "--pack-color": p.color } : undefined}
           >
             <button
               className="productopen"
@@ -523,7 +530,7 @@ function App() {
         ))}
         {!visible.length && <p className="empty">該当する製品がありません。</p>}
       </div>
-    </section>
+    </CatalogPanel>
   );
   return (
     <div
@@ -737,10 +744,14 @@ function App() {
                         <button
                           aria-label="棚を減らす"
                           title="右端の棚を減らす"
-                          disabled={racks <= 1}
-                          onClick={() =>
+                          aria-disabled={racks <= 1}
+                          onClick={(e) =>
                             lastRackCount
-                              ? D({ type: "removeRack" })
+                              ? racks > 1 &&
+                                D({
+                                  type: "removeRack",
+                                  invoker: e.currentTarget,
+                                })
                               : removeRack()
                           }
                         >
@@ -775,13 +786,20 @@ function App() {
                       ひとつ前に戻る
                     </button>
                     <button
-                      onClick={() => D({ type: "clear" })}
-                      disabled={!stats.count}
+                      onClick={(e) =>
+                        stats.count > 0 &&
+                        D({ type: "clear", invoker: e.currentTarget })
+                      }
+                      aria-disabled={!stats.count}
                     >
                       <Trash2 size={14} />
                       棚を空にする
                     </button>
-                    <button onClick={() => D({ type: "reset" })}>
+                    <button
+                      onClick={(e) =>
+                        D({ type: "reset", invoker: e.currentTarget })
+                      }
+                    >
                       <RotateCcw size={14} />
                       リセット
                     </button>
@@ -888,9 +906,28 @@ function App() {
                                                 drag(e, { row: i, index: j })
                                               }
                                               title={p.name}
-                                              onClick={() =>
-                                                toggleSelection(i, j)
-                                              }
+                                              onClick={(event) => {
+                                                if (
+                                                  event.detail &&
+                                                  event.currentTarget.getBoundingClientRect()
+                                                    .width < 44 &&
+                                                  (["touch", "pen"].includes(
+                                                    event.nativeEvent
+                                                      .pointerType,
+                                                  ) ||
+                                                    matchMedia(
+                                                      "(pointer: coarse)",
+                                                    ).matches)
+                                                ) {
+                                                  event.currentTarget.focus({
+                                                    preventScroll: true,
+                                                  });
+                                                  setPicker({
+                                                    row: i,
+                                                    index: j,
+                                                  });
+                                                } else toggleSelection(i, j);
+                                              }}
                                               style={{
                                                 width:
                                                   (p.w / cfg.width) * 100 + "%",
@@ -1054,6 +1091,16 @@ function App() {
           <p>掲載する会社名・製品名などの商標は、各権利者に帰属します。</p>
         </footer>
       </main>
+      {picker && (
+        <SpinePicker
+          {...picker}
+          items={plan.rows[picker.row]}
+          lookup={lookup}
+          selection={selection}
+          toggle={toggleSelection}
+          close={() => setPicker(null)}
+        />
+      )}
       {dialog?.type === "proposal" ? (
         <ProposalDialog
           plan={plan}
@@ -1062,61 +1109,50 @@ function App() {
           onClose={() => D(null)}
           onNotify={notify}
         />
-      ) : dialog?.type === "removeRack" ? (
-        <div className="helpback">
-          <section
-            className="help"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="remove-rack-title"
-          >
-            <h2 id="remove-rack-title">棚 {racks} を取り外しますか？</h2>
-            <p>この棚にある{lastRackCount}セットも配置から取り出します。</p>
-            <button className="smallbutton" autoFocus onClick={() => D(null)}>
-              キャンセル
-            </button>
-            <button className="primary" onClick={removeRack}>
-              棚を取り外す
-            </button>
-          </section>
-        </div>
-      ) : dialog?.type === "clear" || dialog?.type === "reset" ? (
-        <div className="helpback">
-          <section role="alertdialog" aria-modal="true" className="help">
-            <h2>
-              {dialog.type === "reset"
+      ) : ["removeRack", "clear", "reset"].includes(dialog?.type) ? (
+        <ShelfConfirmation
+          invoker={dialog.invoker}
+          title={
+            dialog.type === "removeRack"
+              ? `棚 ${racks} を取り外しますか？`
+              : dialog.type === "reset"
                 ? "棚を初期設定に戻しますか？"
-                : "棚を空にしますか？"}
-            </h2>
-            <p>
-              {dialog.type === "reset"
+                : "棚を空にしますか？"
+          }
+          description={
+            dialog.type === "removeRack"
+              ? `この棚にある${lastRackCount}セットも配置から取り出します。`
+              : dialog.type === "reset"
                 ? `配置を空にし、幅 ${money(defaultConfig.width)} × 高さ ${defaultConfig.height} mm、${defaultConfig.levels}段の棚1台に戻します。`
-                : `配置中の${stats.count}セットをすべて取り出します。棚の寸法と段数は引き続き使えます。`}
-            </p>
-            <button autoFocus className="smallbutton" onClick={() => D(null)}>
-              キャンセル
-            </button>
-            <button
-              className="primary"
-              onClick={() => {
-                const reset = dialog.type === "reset";
-                changePlan(
-                  reset
-                    ? emptyDefaultPlan()
-                    : { ...plan, rows: plan.rows.map(() => []) },
-                );
-                if (reset) {
-                  Z(1);
-                  shelfView.current?.scrollTo(0, 0);
-                }
-                D(null);
-                notify(reset ? "棚を初期設定に戻しました" : "棚を空にしました");
-              }}
-            >
-              {dialog.type === "reset" ? "リセットする" : "すべて取り出す"}
-            </button>
-          </section>
-        </div>
+                : `配置中の${stats.count}セットをすべて取り出します。棚の寸法と段数は引き続き使えます。`
+          }
+          action={
+            dialog.type === "removeRack"
+              ? "棚を取り外す"
+              : dialog.type === "reset"
+                ? "リセットする"
+                : "すべて取り出す"
+          }
+          onCancel={() => D(null)}
+          onConfirm={() => {
+            if (dialog.type === "removeRack") {
+              removeRack();
+              return;
+            }
+            const reset = dialog.type === "reset";
+            changePlan(
+              reset
+                ? emptyDefaultPlan()
+                : { ...plan, rows: plan.rows.map(() => []) },
+            );
+            if (reset) {
+              Z(1);
+              shelfView.current?.scrollTo(0, 0);
+            }
+            D(null);
+            notify(reset ? "棚を初期設定に戻しました" : "棚を空にしました");
+          }}
+        />
       ) : dialog?.type === "help" ? (
         <Guide
           initialTab={page}

@@ -1409,3 +1409,25 @@ header,
     min-height: 36px;
   }
 }
+
+/* Keep shelf-catalog quantity controls together beneath the product on touch screens. */
+.qtytools { gap: 6px; }
+.qtystep { height: 32px; }
+.qtystep button { min-width: 28px; height: 100%; touch-action: manipulation; }
+.qtystep input { width: 36px; height: 100%; }
+.qtytools .quickadd { min-height: 30px; }
+@media (max-width: 720px), (pointer: coarse) {
+  .product:has(.qtytools) { flex-wrap: wrap; row-gap: 8px; }
+  .product:has(.qtytools) .productopen { flex-basis: 100%; }
+  .product .qtytools {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    gap: 9px;
+  }
+  .qtystep { height: 46px; }
+  .qtystep button, .qtystep input { width: 44px; min-width: 44px; height: 44px; }
+  .qtystep input { font-size: 16px; }
+  .qtytools .quickadd { min-height: 44px; padding-inline: 12px; }
+}
