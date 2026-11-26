@@ -29,12 +29,14 @@ import "./dialogs.css";
 const format = (value) => value.toLocaleString("ja-JP");
 const money = (value) => "¥" + format(value);
 const names = {
+  inventory: "収納セットの内訳",
   product: "製品の詳細",
   estimate: "見積もり",
   items: "内容品の集計",
   capacity: "各段の空きスペース",
 };
 const symbols = {
+  inventory: Box,
   product: Box,
   estimate: ClipboardList,
   items: Package,
@@ -232,6 +234,39 @@ function exportEstimate(summary) {
 function Report({ plan, mode }) {
   const summary = summarize(plan);
   const [query, setQuery] = useState("");
+  if (mode === "inventory") {
+    return (
+      <div className="kd-stack">
+        <p>
+          {format(summary.lines.length)}品番、合計{" "}
+          <strong>{format(summary.count)}セット</strong>
+        </p>
+        {summary.count ? (
+          <table className="inventory-table">
+            <thead>
+              <tr>
+                <th scope="col">製品名・品番</th>
+                <th scope="col">数量</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summary.lines.map(({ product, count }) => (
+                <tr key={product.id}>
+                  <th scope="row">
+                    {product.name}
+                    <small>{product.id}</small>
+                  </th>
+                  <td>{format(count)} セット</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p>棚に製品を追加すると、ここに内訳が表示されます。</p>
+        )}
+      </div>
+    );
+  }
   if (mode === "estimate")
     return (
       <div className="kd-stack">

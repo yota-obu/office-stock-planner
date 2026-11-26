@@ -512,7 +512,10 @@ function App() {
                   aria-label={p.name + "を棚に追加"}
                   onClick={() => {
                     const qty = quantity(p.id);
-                    commit(add(plan, p.id, qty), p.name + "を" + qty + "セット追加しました");
+                    commit(
+                      add(plan, p.id, qty),
+                      p.name + "を" + qty + "セット追加しました",
+                    );
                   }}
                 >
                   棚に追加
@@ -650,7 +653,14 @@ function App() {
             <>
               <div className="metrics">
                 {[
-                  [Box, "収納セット数", stats.count, "セット", "blue", null],
+                  [
+                    Box,
+                    "収納セット数",
+                    stats.count,
+                    "セット",
+                    "blue",
+                    "inventory",
+                  ],
                   [
                     ChartNoAxesColumnIncreasing,
                     "棚の使用率",
