@@ -1226,7 +1226,8 @@ header,
 }
 .brand span {
   font-family: inherit;
-  font-size: 18px;
+  font-size: 11.5pt;
+  white-space: nowrap;
   letter-spacing: 0.012em;
 }
 .brand small {
@@ -1417,3 +1418,5 @@ header,
     padding: 0 2px;
   }
 }
+
+@media(min-width:721px) and (max-width:1170px){.app:not(.compactNav) .brand{margin-inline:12px;gap:8px}}
