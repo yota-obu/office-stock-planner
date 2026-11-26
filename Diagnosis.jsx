@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import {
   ArrowRight,
+  Truck,
+  Footprints,
+  Mountain,
+  Sun,
+  Car,
+  Waves,
   UsersRound,
   CalendarDays,
   Utensils,
@@ -54,6 +60,38 @@ const options = [
     note: "ヘルメットを人数分",
     Icon: HardHat,
   },
+  {
+    key: "carry",
+    label: "給水・運搬",
+    note: "給水班ごとに1セット",
+    Icon: Truck,
+  },
+  {
+    key: "commute",
+    label: "徒歩帰宅",
+    note: "帰宅時の持ち出し用",
+    Icon: Footprints,
+  },
+  {
+    key: "ash",
+    label: "火山灰・粉じん",
+    note: "マスクとゴーグル",
+    Icon: Mountain,
+  },
+  { key: "heat", label: "暑さ対策", note: "冷却用品を人数分", Icon: Sun },
+  { key: "vehicle", label: "車内待機", note: "車両ごとに1セット", Icon: Car },
+  {
+    key: "vehicleToilet",
+    label: "車載トイレ",
+    note: "車両ごとに1セット",
+    Icon: Toilet,
+  },
+  {
+    key: "flood",
+    label: "浸水・漏水",
+    note: "吸水バッグの取扱状況",
+    Icon: Waves,
+  },
 ];
 const defaultNeeds = ["food", "water", "toilet"];
 const basicToilet = "非常用簡易トイレ";
@@ -71,22 +109,44 @@ function toiletYield(id) {
     )
   );
 }
-export function calculateDiagnosis(people, days, needs) {
+export function calculateDiagnosis(people, days, needs, prefs = {}) {
   const lines = [];
   function add(id, qty) {
     if (qty > 0) lines.push({ id, qty });
   }
   if (needs.includes("food")) {
-    add("BCS-300", people * Math.floor(days / 3));
-    add("BCS-200", people * (days % 3));
+    if (prefs.foodType === "compact") add("CBCS-200", people * days);
+    else {
+      const long = prefs.foodType === "long";
+      add(long ? "BCS-500" : "BCS-300", people * Math.floor(days / 3));
+      add(long ? "BCS-400" : "BCS-200", people * (days % 3));
+    }
   }
-  if (needs.includes("water") && !needs.includes("food"))
+  if (needs.includes("carry"))
+    add("KSS-200", Math.ceil(people / (prefs.teamSize || 10)));
+  if (needs.includes("commute")) add("KTS-200", people);
+  if (needs.includes("heat")) add("ATS-200", people);
+  if (needs.includes("ash")) add("KZB-100", people);
+  if (needs.includes("vehicle")) add("SYS-200", prefs.vehicles || 1);
+  if (needs.includes("vehicleToilet")) add("SYS-300", prefs.vehicles || 1);
+  if (
+    needs.includes("water") &&
+    !["food", "commute", "heat"].some((key) => needs.includes(key))
+  )
     add("MNS-200", people);
-  if (needs.includes("hygiene")) add("HGS-200", people);
+  if (needs.includes("hygiene")) {
+    const withPads = Math.min(people, prefs.padUsers || 0);
+    add("HGS-300", withPads);
+    add("HGS-200", people - withPads);
+  }
   if (needs.includes("rest")) add("ABS-200", people);
   if (needs.includes("helmet")) add("HMS-200", people);
   const suppliedToilets = () =>
-    lines.reduce((n, { id, qty }) => n + toiletYield(id) * qty, 0);
+    lines.reduce(
+      (n, { id, qty }) =>
+        n + (id.startsWith("SYS-") ? 0 : toiletYield(id)) * qty,
+      0,
+    );
   const toiletTarget = needs.includes("toilet") ? people * days * 5 : 0;
   const shortfall = Math.max(0, toiletTarget - suppliedToilets());
   if (shortfall) {
@@ -102,7 +162,9 @@ export function calculateDiagnosis(people, days, needs) {
     add("TLS-300", extraLarge ? 0 : smallBoxes);
   }
   const water = lines.reduce(
-    (n, { id, qty }) => n + (qty * countItem(id, "保存水（500mL）")) / 2,
+    (n, { id, qty }) =>
+      n +
+      (id.startsWith("SYS-") ? 0 : qty * countItem(id, "保存水（500mL）")) / 2,
     0,
   );
   return {
@@ -120,8 +182,8 @@ export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
   const { people = 10, days = 3, needs = defaultNeeds } = assumptions;
   const [editing, setEditing] = useState({});
   const [placementError, setPlacementError] = useState(null);
-  const selection = JSON.stringify([people, days, needs]);
-  const plan = calculateDiagnosis(people, days, needs);
+  const selection = JSON.stringify(assumptions);
+  const plan = calculateDiagnosis(people, days, needs, assumptions);
   const invalid = Object.values(editing).some((x) => x === "");
   const toggled = (key) =>
     onAssumptions({
@@ -129,7 +191,7 @@ export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
         ? needs.filter((n) => n !== key)
         : [...needs, key],
     });
-  const numberField = (key, title, Icon, value, unit, max) => (
+  const numberField = (key, title, Icon, value, unit, max, min = 1) => (
     <label className="dg-number">
       <span>
         <Icon size={16} />
@@ -139,14 +201,14 @@ export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
         <input
           type="number"
           aria-label={title}
-          min="1"
+          min={min}
           max={max}
           step="1"
           value={editing[key] ?? value}
           onChange={(e) => {
             const raw = e.target.value;
             const n = Number(raw);
-            if (!raw || !Number.isInteger(n) || n < 1 || n > max) {
+            if (!raw || !Number.isInteger(n) || n < min || n > max) {
               setEditing((prev) => ({ ...prev, [key]: "" }));
               return;
             }
@@ -172,24 +234,81 @@ export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
         <div className="dg-block">
           <h2>備えたいもの</h2>
           <p>必要な項目を複数選べます。</p>
-          <div className="dg-options">
-            {options.map(({ key, label, note, Icon }) => (
-              <button
-                key={key}
-                type="button"
-                aria-pressed={needs.includes(key)}
-                className="dg-option"
-                onClick={() => toggled(key)}
-              >
-                <Icon className="dg-opt-icon" size={22} strokeWidth={1.6} />
-                <span>
-                  <strong>{label}</strong>
-                  <small>{note}</small>
-                </span>
-                <i>{needs.includes(key) && <Check size={12} />}</i>
-              </button>
-            ))}
+          {[
+            ["日常の備蓄", options.slice(0, 6)],
+            ["活動・環境別", options.slice(6)],
+          ].map(([title, group]) => (
+            <div key={title}>
+              <h3 className="dg-group-title">{title}</h3>
+              <div className="dg-options">
+                {group.map(({ key, label, note, Icon }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={needs.includes(key)}
+                    className="dg-option"
+                    onClick={() => toggled(key)}
+                  >
+                    <Icon className="dg-opt-icon" size={22} strokeWidth={1.6} />
+                    <span>
+                      <strong>{label}</strong>
+                      <small>{note}</small>
+                    </span>
+                    <i>{needs.includes(key) && <Check size={12} />}</i>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className="dg-preferences">
+            {needs.includes("food") && (
+              <label>
+                食料セットの仕様
+                <select
+                  value={assumptions.foodType || "standard"}
+                  onChange={(e) => onAssumptions({ foodType: e.target.value })}
+                >
+                  <option value="standard">標準（ご飯入り）</option>
+                  <option value="long">9年保存</option>
+                  <option value="compact">コンパクト（1日用）</option>
+                </select>
+              </label>
+            )}
+            {needs.includes("hygiene") &&
+              numberField(
+                "padUsers",
+                "生理用品入りを希望する人数",
+                UsersRound,
+                Math.min(people, assumptions.padUsers || 0),
+                "人",
+                people,
+                0,
+              )}
+            {needs.includes("carry") &&
+              numberField(
+                "teamSize",
+                "給水セットを共有する人数",
+                UsersRound,
+                assumptions.teamSize || 10,
+                "人／班",
+                9999,
+              )}
+            {(needs.includes("vehicle") || needs.includes("vehicleToilet")) &&
+              numberField(
+                "vehicles",
+                "備蓄する車両数",
+                Car,
+                assumptions.vehicles || 1,
+                "台",
+                9999,
+              )}
           </div>
+          {needs.includes("flood") && (
+            <p>
+              吸水バッグ KBG-200
+              は販売終了のため、購入提案は0箱です。保有分は棚から配置できます。
+            </p>
+          )}
         </div>
         <details className="dg-basis">
           <summary>
@@ -198,15 +317,15 @@ export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
           </summary>
           <div>
             <p>
-              食料はメーカーの想定期間で計算します。1人につき3日ごとにBCS-300を1箱、残りの日数は1日ごとにBCS-200を1箱とします。エネルギー量や個別の食事制限は別途確認してください。
+              食料はメーカーの想定期間で計算します。標準と9年保存は3日用と1日用を組み合わせ、コンパクトは1人1日1箱で計算します。エネルギー量や個別の食事制限は別途確認してください。
             </p>
             <p>
               飲料水は1人1日3
-              L、トイレは1人1日5回を目安とします。食料を選ばず飲料水を希望する場合は、保存水500
-              mL入りのミニセットを1人1箱提案し、追加で必要な飲料水を表示します。選んだセットに含まれる水と簡易トイレも合算します。トイレの不足分は20回・100回セットで補います。
+              L、トイレは1人1日5回を目安とします。食料・徒歩帰宅・暑さ対策を選ばず飲料水を希望する場合は、保存水500
+              mL入りのミニセットを1人1箱提案し、追加で必要な飲料水を表示します。車載品は別保管とし、拠点用の水とトイレに算入しません。帰宅セットは出発まで拠点で保管する想定です。トイレの不足分は20回・100回セットで補います。
             </p>
             <p>
-              衛生用品・毛布・ヘルメットは、選択した用途ごとに1人1セットを配布する想定です。
+              徒歩帰宅・降灰・暑さ対策・衛生用品・毛布・ヘルメットは、選択した用途ごとに1人1セットを配布する想定です。
             </p>
             <a
               target="_blank"

@@ -318,3 +318,42 @@
 .dg-error a {
   color: inherit;
 }
+.dg-group-title {
+  font-size: 12px;
+  color: #506653;
+  margin: 17px 0 6px;
+}
+.dg-group-title + .dg-options {
+  margin-top: 6px;
+}
+.dg-preferences {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.dg-preferences > label {
+  font-size: 13px;
+  font-weight: 650;
+}
+.dg-preferences select {
+  display: block;
+  width: 100%;
+  padding: 9px;
+  margin-top: 5px;
+  border: 1px solid #bfcdbf;
+  border-radius: 7px;
+  background: #fafcf9;
+}
+.dg-preferences .dg-number b {
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .dg-option small,
+  .dg-line small,
+  .dg-water small,
+  .dg-toilet,
+  .dg-replace,
+  .dg-totals small {
+    font-size: 12px;
+  }
+}

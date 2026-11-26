@@ -134,3 +134,22 @@
     max-height: 72px;
   }
 }
+.wcLine > label {
+  display: grid;
+  gap: 8px;
+  margin-top: 17px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.wcLine + .wcLine {
+  border-top: 1px solid #d4ded3;
+  margin-top: 16px;
+  padding-top: 6px;
+}
+.wcLine .wcSpec {
+  margin: 14px 0;
+  padding-top: 10px;
+}
+.wcAdd {
+  margin-top: 14px;
+}

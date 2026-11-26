@@ -1134,3 +1134,117 @@ h1 {
   width: auto;
   min-height: 0;
 }
+.spine[aria-pressed="true"] {
+  outline: 2px solid #176344;
+  outline-offset: -2px;
+  z-index: 1;
+}
+.spine[aria-pressed="true"]:after {
+  content: "✓";
+  display: grid;
+  place-items: center;
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f593e;
+  color: white;
+  border-radius: 50%;
+  font: bold 10px/1 Arial;
+  width: 14px;
+  height: 14px;
+}
+.selectiontools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  padding: 9px 15px;
+  background: #eaf3e9;
+  color: #284f35;
+}
+.selectiontools select,
+.selectiontools button {
+  background: white;
+  border: 1px solid #bdcebc;
+  border-radius: 4px;
+  padding: 5px;
+  color: inherit;
+  font-size: 11px;
+}
+.wide .product,
+.wide .productopen {
+  cursor: pointer;
+}
+.wide .thumb {
+  touch-action: auto;
+}
+header,
+.save,
+.productcopy small {
+  color: #556456;
+}
+.picklist {
+  margin: 0 15px 9px;
+  font-size: 12px;
+}
+.picklist summary {
+  cursor: pointer;
+  color: #435946;
+  padding: 5px 0;
+}
+.picklist fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 9px;
+  max-height: 180px;
+  overflow: auto;
+  border: 1px solid #ccd9cb;
+  border-radius: 5px;
+  padding: 6px;
+}
+.picklist label {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  min-height: 30px;
+}
+.wide .productopen {
+  min-height: 65px;
+}
+@media (max-width: 720px) {
+  header,
+  .title p,
+  .tip,
+  .productcopy small,
+  .productcopy b,
+  .search input,
+  .qtytools .quickadd,
+  .qtystep input,
+  .metriclabel,
+  .metrics small,
+  .metricContents,
+  .canvasfoot,
+  .save,
+  .capacityrow,
+  .capacitytitle button,
+  .shelftools button,
+  .tinycount,
+  .category select,
+  .smallbutton,
+  .wcQty span,
+  .wcSpec small {
+    font-size: 12px;
+  }
+  .productcopy small {
+    letter-spacing: 0;
+  }
+  .tip {
+    line-height: 1.6;
+  }
+  .wcQty button,
+  .qtystep button {
+    min-height: 24px;
+  }
+}

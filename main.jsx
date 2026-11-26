@@ -1,3 +1,4 @@
+import { Dimension, TierControl } from "./ShelfControls.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
@@ -8,7 +9,6 @@ import {
   Trash2,
   Undo2,
   LibraryBig,
-  UsersRound,
   ReceiptText,
   PanelTop,
   Box,
@@ -21,16 +21,11 @@ import {
   Plus,
   Minus,
   MousePointer2,
-  Move,
-  GripVertical,
   Maximize,
-  RotateCcw,
   CircleHelp,
-  Check,
   Menu,
   X,
   Layers3,
-  BookmarkCheck,
   LayoutDashboard,
   Info,
 } from "lucide-react";
@@ -62,7 +57,7 @@ const descriptions = {
     "人数・滞在日数・備えたいものから、オフィスに合う防災セットを選びましょう。",
   shelf: "ファイル棚の内寸に合わせて、防災セットの配置と費用を確認できます。",
   width: "製品と数量を選ぶと、横一列に並べたときの棚幅がわかります。",
-  catalog: "製品の仕様やセット内容を確認して、棚に追加できます。",
+  catalog: "品番や内容物で検索し、製品の寸法・価格・セット内容を確認できます。",
 };
 const currentPage = () =>
   Object.hasOwn(titles, location.hash.slice(1))
@@ -133,13 +128,16 @@ function App() {
   const [quantities, setQuantities] = useState({}),
     [dragging, setDragging] = useState(null),
     [assumptions, setAssumptions] = useState(loadAssumptions);
+  const [selection, setSelection] = useState([]);
   function changePlan(next) {
+    setSelection([]);
     history.current = [...history.current.slice(-49), plan];
     setPlan(next);
   }
   function undo() {
     const previous = history.current.pop();
     if (previous) {
+      setSelection([]);
       setPlan(previous);
       notify("ひとつ前の状態に戻しました");
     }
@@ -237,25 +235,38 @@ function App() {
   }
   function dragPayload(data) {
     const id = data.id ?? plan.rows[data.row][data.index];
-    const indices =
-      data.row == null
-        ? []
-        : plan.rows[data.row]
-            .map((v, i) => (v === id ? i : -1))
-            .filter((i) => i >= 0);
-    const selected =
-      data.row == null
-        ? []
-        : [data.index, ...indices.filter((i) => i !== data.index)].slice(
-            0,
-            quantity(id),
-          );
+    if (data.row == null)
+      return { ...data, id, qty: quantity(id), selected: [] };
+    const picked = selection.some(
+      (item) => item.row === data.row && item.index === data.index,
+    );
+    let selected;
+    if (picked) selected = selection;
+    else if (selection.length)
+      selected = [{ row: data.row, index: data.index }];
+    else {
+      const same = plan.rows[data.row]
+        .map((v, i) => (v === id ? i : -1))
+        .filter((i) => i >= 0 && i !== data.index);
+      selected = [data.index, ...same]
+        .slice(0, quantity(id))
+        .map((index) => ({ row: data.row, index }));
+    }
     return {
       ...data,
       id,
-      selected,
-      qty: data.row == null ? quantity(id) : selected.length,
+      selected: [...selected].sort(
+        (a, b) => a.row - b.row || a.index - b.index,
+      ),
+      qty: selected.length,
     };
+  }
+  function toggleSelection(row, index) {
+    setSelection((current) =>
+      current.some((v) => v.row === row && v.index === index)
+        ? current.filter((v) => v.row !== row || v.index !== index)
+        : [...current, { row, index }],
+    );
   }
   const touch = useRef(null),
     suppressClick = useRef(false);
@@ -325,11 +336,45 @@ function App() {
     });
   }
   function withoutDragged(data) {
+    const removed = new Set(data.selected.map((v) => v.row + ":" + v.index));
     return {
       ...plan,
       rows: plan.rows.map((row, i) =>
-        i === data.row ? row.filter((_, j) => !data.selected.includes(j)) : row,
+        row.filter((_, j) => !removed.has(i + ":" + j)),
       ),
+    };
+  }
+  function placeGroup(data, row, index = null) {
+    const base = data.row == null ? plan : withoutDragged(data);
+    const ids =
+      data.row == null
+        ? null
+        : data.selected.map((pos) => plan.rows[pos.row][pos.index]);
+    const result = ids ? { plan: base } : add(base, data.id, data.qty, row);
+    if (result.error) return result;
+    if (
+      ids &&
+      ids.reduce((sum, id) => sum + lookup[id].w, 0) +
+        base.rows[row].reduce((sum, id) => sum + lookup[id].w, 0) >
+        cfg.width
+    ) {
+      return {
+        plan,
+        error:
+          "選んだ製品はこの段に収まりません。別の段を選ぶか、点数を減らしてください。",
+      };
+    }
+    const target = [...result.plan.rows[row]];
+    const group = ids ?? target.splice(target.length - data.qty);
+    const offset = data.selected.filter(
+      (pos) => pos.row === row && pos.index < index,
+    ).length;
+    target.splice(index === null ? target.length : index - offset, 0, ...group);
+    return {
+      plan: {
+        ...result.plan,
+        rows: result.plan.rows.map((items, i) => (i === row ? target : items)),
+      },
     };
   }
   function drop(e, row, index = null) {
@@ -339,15 +384,7 @@ function App() {
     const data = dragging;
     if (!data) return;
     setDragging(null);
-    const base = data.row == null ? plan : withoutDragged(data);
-    const result = add(base, data.id, data.qty, row);
-    if (!result.error && index !== null) {
-      const target = result.plan.rows[row];
-      const group = target.splice(target.length - data.qty);
-      const offset =
-        data.row === row ? data.selected.filter((i) => i < index).length : 0;
-      target.splice(index - offset, 0, ...group);
-    }
+    const result = placeGroup(data, row, index);
     commit(result, data.qty + "セットを配置しました");
   }
   function dropOutside(e, fromTouch = false) {
@@ -374,7 +411,6 @@ function App() {
     ["shelf", PanelTop, "棚シミュレーター"],
     ["width", Ruler, "必要幅を計算"],
     ["catalog", LibraryBig, "製品カタログ"],
-    ["employees", UsersRound, "社員数から試算"],
     ["estimate", ReceiptText, "見積もり・集計"],
   ];
   const catalog = (
@@ -416,15 +452,22 @@ function App() {
       <div className="productlist">
         {visible.map((p) => (
           <article
-            draggable
-            onDragStart={(e) => drag(e, { id: p.id })}
+            draggable={page === "shelf"}
+            onDragStart={(e) => {
+              if (page === "shelf") drag(e, { id: p.id });
+            }}
             key={p.id}
             className="product"
           >
             <button
               className="productopen"
               onClick={() =>
-                D({ type: "product", id: p.id, qty: quantity(p.id) })
+                D({
+                  type: "product",
+                  id: p.id,
+                  qty: quantity(p.id),
+                  readOnly: page === "catalog",
+                })
               }
             >
               <span
@@ -439,42 +482,49 @@ function App() {
                 <b>¥{money(p.price)}</b>
               </span>
             </button>
-            <div className="qtytools">
-              <div className="qtystep">
+            {page === "shelf" && (
+              <div className="qtytools">
+                <div className="qtystep">
+                  <button
+                    aria-label={p.name + "の数量を減らす"}
+                    disabled={quantity(p.id) <= 1}
+                    onClick={() => setQuantity(p.id, quantity(p.id) - 1)}
+                  >
+                    −
+                  </button>
+                  <input
+                    aria-label={p.name + "のドラッグ数量"}
+                    type="number"
+                    min="1"
+                    max="9999"
+                    value={quantities[p.id] ?? 1}
+                    onChange={(e) => setQuantity(p.id, e.target.value)}
+                    onBlur={() => setQuantity(p.id, quantity(p.id))}
+                  />
+                  <button
+                    aria-label={p.name + "の数量を増やす"}
+                    onClick={() => setQuantity(p.id, quantity(p.id) + 1)}
+                  >
+                    ＋
+                  </button>
+                </div>
                 <button
-                  aria-label={p.name + "の数量を減らす"}
-                  disabled={quantity(p.id) <= 1}
-                  onClick={() => setQuantity(p.id, quantity(p.id) - 1)}
+                  className="quickadd"
+                  title={p.name + "の数量を選んで追加"}
+                  aria-label={p.name + "を棚に追加"}
+                  onClick={() =>
+                    D({
+                      type: "product",
+                      id: p.id,
+                      qty: quantity(p.id),
+                      readOnly: page === "catalog",
+                    })
+                  }
                 >
-                  −
-                </button>
-                <input
-                  aria-label={p.name + "のドラッグ数量"}
-                  type="number"
-                  min="1"
-                  max="9999"
-                  value={quantities[p.id] ?? 1}
-                  onChange={(e) => setQuantity(p.id, e.target.value)}
-                  onBlur={() => setQuantity(p.id, quantity(p.id))}
-                />
-                <button
-                  aria-label={p.name + "の数量を増やす"}
-                  onClick={() => setQuantity(p.id, quantity(p.id) + 1)}
-                >
-                  ＋
+                  棚に追加
                 </button>
               </div>
-              <button
-                className="quickadd"
-                title={p.name + "の数量を選んで追加"}
-                aria-label={p.name + "の数量を選んで追加"}
-                onClick={() =>
-                  D({ type: "product", id: p.id, qty: quantity(p.id) })
-                }
-              >
-                棚に追加
-              </button>
-            </div>
+            )}
           </article>
         ))}
         {!visible.length && <p className="empty">該当する製品がありません。</p>}
@@ -631,7 +681,7 @@ function App() {
                     stats.fill,
                     "%",
                     "green",
-                    "settings",
+                    "dimensions",
                   ],
                   [
                     ReceiptText,
@@ -663,7 +713,14 @@ function App() {
                     "items",
                   ],
                 ].map(([I, label, value, unit, color, target]) => (
-                  <button key={label} onClick={() => D({ type: target })}>
+                  <button
+                    key={label}
+                    onClick={() =>
+                      target === "dimensions"
+                        ? document.querySelector(".widthmeasure input")?.focus()
+                        : D({ type: target })
+                    }
+                  >
                     <span className={"metricicon " + color}>
                       <I size={18} />
                     </span>
@@ -690,13 +747,7 @@ function App() {
                       <PanelTop />
                       棚プレビュー
                     </h2>
-                    <button
-                      className="smallbutton"
-                      onClick={() => D({ type: "settings" })}
-                    >
-                      <SlidersHorizontal size={14} />
-                      棚の設定
-                    </button>
+                    <TierControl plan={plan} commit={commit} />
                   </div>
                   <div className="shelftools">
                     <button onClick={undo} disabled={!history.current.length}>
@@ -741,7 +792,7 @@ function App() {
                         }}
                       >
                         <div className="widthmeasure">
-                          <span>{money(cfg.width)} mm</span>
+                          <Dimension axis="width" plan={plan} commit={commit} />
                         </div>
                         <div className="rack">
                           {plan.rows.map((row, i) => (
@@ -766,6 +817,9 @@ function App() {
                                     <button
                                       key={j}
                                       className="spine"
+                                      aria-pressed={selection.some(
+                                        (v) => v.row === i && v.index === j,
+                                      )}
                                       data-index={j}
                                       onPointerDown={(e) =>
                                         touchStart(e, { row: i, index: j })
@@ -779,14 +833,7 @@ function App() {
                                         drag(e, { row: i, index: j })
                                       }
                                       title={p.name}
-                                      onClick={() =>
-                                        D({
-                                          type: "product",
-                                          id,
-                                          row: i,
-                                          index: j,
-                                        })
-                                      }
+                                      onClick={() => toggleSelection(i, j)}
                                       style={{
                                         width: (p.w / cfg.width) * 100 + "%",
                                         height:
@@ -804,7 +851,11 @@ function App() {
                           ))}
                         </div>
                         <div className="heightmeasure">
-                          <span>{money(cfg.height)} mm</span>
+                          <Dimension
+                            axis="height"
+                            plan={plan}
+                            commit={commit}
+                          />
                         </div>
                       </div>
                     </div>
@@ -838,14 +889,81 @@ function App() {
                       {cfg.levels}段ラック
                     </span>
                     <span>
-                      幅 {cfg.width} × 高さ {cfg.height} × 奥行 {cfg.depth} mm
+                      <Dimension axis="depth" plan={plan} commit={commit} />
                     </span>
                   </div>
+                  <details className="picklist">
+                    <summary>棚の製品をリストから選択</summary>
+                    {plan.rows.map((row, i) => (
+                      <fieldset key={i}>
+                        <legend>{i + 1}段目</legend>
+                        {row.length ? (
+                          row.map((id, j) => (
+                            <label key={j}>
+                              <input
+                                type="checkbox"
+                                checked={selection.some(
+                                  (v) => v.row === i && v.index === j,
+                                )}
+                                onChange={() => toggleSelection(i, j)}
+                              />
+                              {j + 1}. {lookup[id].name}（{id}）
+                            </label>
+                          ))
+                        ) : (
+                          <small>空き段</small>
+                        )}
+                      </fieldset>
+                    ))}
+                  </details>
+                  {selection.length > 0 && (
+                    <div className="selectiontools">
+                      <b>{selection.length}点を選択中</b>
+                      <select
+                        aria-label="選択した製品の移動先"
+                        value=""
+                        onChange={(e) =>
+                          commit(
+                            placeGroup(
+                              {
+                                row: selection[0].row,
+                                selected: [...selection].sort(
+                                  (a, b) => a.row - b.row || a.index - b.index,
+                                ),
+                              },
+                              Number(e.target.value),
+                            ),
+                            "選んだ製品を移動しました",
+                          )
+                        }
+                      >
+                        <option value="" disabled>
+                          段に移動…
+                        </option>
+                        {plan.rows.map((_, i) => (
+                          <option value={i} key={i}>
+                            {i + 1}段目
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => {
+                          changePlan(withoutDragged({ selected: selection }));
+                          notify("選んだ製品を取り出しました");
+                        }}
+                      >
+                        取り出す
+                      </button>
+                      <button onClick={() => setSelection([])}>
+                        選択を解除
+                      </button>
+                    </div>
+                  )}
                   <div className="tip">
                     <MousePointer2 size={16} />
                     {dragging?.row != null
                       ? "棚の外で離すと取り出します。"
-                      : "商品欄で数量を選び、棚にドラッグ。棚の外で離すと取り出せます。"}
+                      : "背表紙をクリックして複数選択し、まとめてドラッグできます。"}
                   </div>
                   <div className="capacity">
                     <div className="capacitytitle">
@@ -941,10 +1059,10 @@ function App() {
           <section className="help" role="dialog" aria-modal="true">
             <h2>使い方ガイド</h2>
             <p>
-              「棚の設定」で内寸と段数を指定します。商品欄の＋・−で数量を選んで、製品の絵を棚にドラッグしてください。数字を直接入力することもできます。
+              寸法欄をクリックして直接入力し、＋・−で段数を調整します。商品欄の＋・−で数量を選んで、製品の絵を棚にドラッグしてください。数字を直接入力することもできます。
             </p>
             <p>
-              棚の製品をドラッグすると、同じ段の同じ製品を指定個数までまとめて動かせます。棚の外に離すと取り出します。「ひとつ前に戻る」で取り出す前の状態に戻せます。
+              背表紙をクリックすると選択できます。異なる製品や別の段の製品も一緒に選び、選んだ背表紙をつかんで移動できます。棚の外に離すと取り出します。「ひとつ前に戻る」で取り出す前の状態に戻せます。
             </p>
             <button className="primary" autoFocus onClick={() => D(null)}>
               閉じる

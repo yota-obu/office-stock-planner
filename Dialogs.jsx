@@ -8,22 +8,16 @@ import {
   Download,
   Package,
   Plus,
-  Ruler,
   Search,
-  Settings2,
   Trash2,
-  Users,
   X,
 } from "lucide-react";
 import ProductArt from "./ProductArt.jsx";
-import { products } from "./catalog.js";
 import {
   add,
   byId,
-  limits,
   move,
   remove,
-  resize,
   summarize,
   summarizeContents,
 } from "./engine.js";
@@ -33,16 +27,12 @@ import "./dialogs.css";
 const format = (value) => value.toLocaleString("ja-JP");
 const money = (value) => "¥" + format(value);
 const names = {
-  settings: "棚の設定",
   product: "製品の詳細",
-  employees: "社員数から必要数を算出",
   estimate: "見積もり",
   items: "内容品の集計",
 };
 const symbols = {
-  settings: Settings2,
   product: Box,
-  employees: Users,
   estimate: ClipboardList,
   items: Package,
 };
@@ -85,79 +75,6 @@ function Destination({ plan, value, onChange, auto = true }) {
         ))}
       </select>
     </Field>
-  );
-}
-function Settings({ plan, accept }) {
-  const [draft, setDraft] = useState({
-    ...plan.config,
-    tierHeight: Math.ceil(plan.config.height / plan.config.levels),
-  });
-  const [clear, setClear] = useState(false);
-  const keys = [
-    ["width", "棚の内幅", "mm"],
-    ["depth", "棚の内奥行", "mm"],
-    ["tierHeight", "1段あたりの内高", "mm"],
-    ["levels", "段数", "段"],
-  ];
-  return (
-    <form
-      className="kd-stack"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const source = clear
-          ? { ...plan, rows: plan.rows.map(() => []) }
-          : plan;
-        const { tierHeight, ...config } = draft;
-        accept(resize(source, config, tierHeight), "棚の設定を更新しました");
-      }}
-    >
-      <p>
-        棚板の厚みを除いた内寸を入力してください。段を増やすと、1段あたりの内高を保ったまま棚全体が高くなります。
-      </p>
-      <div className="kd-grid">
-        {keys.map(([key, label, unit]) => (
-          <NumberField
-            key={key}
-            label={label}
-            unit={unit}
-            min={key === "tierHeight" ? 1 : limits[key][0]}
-            max={
-              key === "tierHeight"
-                ? Math.floor(limits.height[1] / (draft.levels || 1))
-                : limits[key][1]
-            }
-            value={draft[key]}
-            onChange={(v) =>
-              setDraft({ ...draft, [key]: v === "" ? "" : Number(v) })
-            }
-          />
-        ))}
-      </div>
-      <div className="kd-callout">
-        <Ruler size={20} />
-        <span>
-          棚全体の有効内高{" "}
-          <strong>
-            {draft.levels > 0 ? format(draft.tierHeight * draft.levels) : "—"}{" "}
-            mm
-          </strong>
-        </span>
-      </div>
-      {plan.rows.some((row) => row.length > 0) && (
-        <label className="kd-check">
-          <input
-            type="checkbox"
-            checked={clear}
-            onChange={(e) => setClear(e.target.checked)}
-          />
-          配置済みの製品をすべて取り出す
-        </label>
-      )}
-      <button className="kd-primary" type="submit">
-        <Check size={17} />
-        {clear ? "棚を空にして設定を適用" : "設定を適用"}
-      </button>
-    </form>
   );
 }
 function Product({ dialog, plan, accept }) {
@@ -218,140 +135,67 @@ function Product({ dialog, plan, accept }) {
       <a className="kd-link" href={p.url} target="_blank" rel="noreferrer">
         公式の製品情報 <ArrowUpRight size={14} />
       </a>
-      <form
-        className="kd-stack kd-section"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (placed)
-            accept(
-              move(plan, dialog.row, dialog.index, Number(dest)),
-              "製品を移動しました",
-            );
-          else
-            accept(
-              add(plan, p.id, Number(qty), dest === "" ? null : Number(dest)),
-              qty + "セットを棚に追加しました",
-            );
-        }}
-      >
-        <div className={placed ? "" : "kd-grid kd-split"}>
-          {!placed && (
-            <NumberField
-              label="数量"
-              unit="セット"
-              value={qty}
-              onChange={setQty}
-            />
-          )}
-          <Destination
-            auto={!placed}
-            plan={plan}
-            value={dest}
-            onChange={setDest}
-          />
-        </div>
-        <button
-          type="submit"
-          className="kd-primary"
-          disabled={placed && Number(dest) === dialog.row}
-        >
-          {placed ? <Check size={17} /> : <Plus size={17} />}{" "}
-          {placed ? "指定した段へ移動" : "棚に追加"}
-        </button>
-        {placed && (
-          <button
-            type="button"
-            className="kd-quiet"
-            onClick={() =>
+      {!dialog.readOnly && (
+        <form
+          className="kd-stack kd-section"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (placed)
               accept(
-                remove(plan, dialog.row, dialog.index),
-                "製品を棚から取り出しました",
-              )
-            }
+                move(plan, dialog.row, dialog.index, Number(dest)),
+                "製品を移動しました",
+              );
+            else
+              accept(
+                add(plan, p.id, Number(qty), dest === "" ? null : Number(dest)),
+                qty + "セットを棚に追加しました",
+              );
+          }}
+        >
+          <div className={placed ? "" : "kd-grid kd-split"}>
+            {!placed && (
+              <NumberField
+                label="数量"
+                unit="セット"
+                value={qty}
+                onChange={setQty}
+              />
+            )}
+            <Destination
+              auto={!placed}
+              plan={plan}
+              value={dest}
+              onChange={setDest}
+            />
+          </div>
+          <button
+            type="submit"
+            className="kd-primary"
+            disabled={placed && Number(dest) === dialog.row}
           >
-            <Trash2 size={15} />
-            棚から取り出す
+            {placed ? <Check size={17} /> : <Plus size={17} />}{" "}
+            {placed ? "指定した段へ移動" : "棚に追加"}
           </button>
-        )}
-      </form>
+          {placed && (
+            <button
+              type="button"
+              className="kd-quiet"
+              onClick={() =>
+                accept(
+                  remove(plan, dialog.row, dialog.index),
+                  "製品を棚から取り出しました",
+                )
+              }
+            >
+              <Trash2 size={15} />
+              棚から取り出す
+            </button>
+          )}
+        </form>
+      )}
     </div>
   );
 }
-function Employees({ plan, accept }) {
-  const [staff, setStaff] = useState("10");
-  const [rate, setRate] = useState("1");
-  const [id, setId] = useState(products[0]?.id);
-  const p = byId(id);
-  const count = Number(staff) * Number(rate);
-  const valid = [staff, rate].every(
-    (v) =>
-      Number.isSafeInteger(Number(v)) && Number(v) > 0 && Number(v) <= 9999,
-  );
-  const existing = plan.rows.flat().filter((value) => value === id).length;
-  const shortage = valid ? Math.max(0, count - existing) : 0;
-  return (
-    <form
-      className="kd-stack"
-      onSubmit={(e) => {
-        e.preventDefault();
-        accept(add(plan, id, shortage), shortage + "セットを追加しました");
-      }}
-    >
-      <p>
-        対象製品を社員1人に何セット配るか指定すると、現在の収納数を差し引いた不足数を計算できます。
-      </p>
-      <Field label="対象製品">
-        <select value={id} onChange={(e) => setId(e.target.value)}>
-          {products.map((product) => (
-            <option key={product.id} value={product.id}>
-              {product.name}（{product.id}）
-            </option>
-          ))}
-        </select>
-      </Field>
-      <div className="kd-grid">
-        <NumberField
-          label="社員数"
-          unit="人"
-          value={staff}
-          onChange={setStaff}
-        />
-        <NumberField
-          label="1人あたりの配布数"
-          unit="セット"
-          value={rate}
-          onChange={setRate}
-        />
-      </div>
-      <div className="kd-metrics">
-        {[
-          ["必要数", valid ? count : null],
-          ["収納済み", existing],
-          ["不足数", valid ? shortage : null],
-        ].map(([k, v]) => (
-          <div key={k}>
-            <small>{k}</small>
-            <strong>{v === null ? "—" : format(v)}</strong>
-            <small>セット</small>
-          </div>
-        ))}
-      </div>
-      <div className="kd-line">
-        <span>追加分の概算（税込）</span>
-        <b>{valid ? money(shortage * p.price) : "—"}</b>
-      </div>
-      <button
-        className="kd-primary"
-        type="submit"
-        disabled={!valid || !shortage}
-      >
-        <Plus size={16} />
-        {valid && !shortage ? "必要数を収納済み" : "不足分を棚に追加"}
-      </button>
-    </form>
-  );
-}
-
 function exportEstimate(summary) {
   const rows = [
     ["製品名", "品番", "税込単価（円）", "セット数", "税込小計（円）"],
@@ -542,12 +386,8 @@ function ActiveDialog({ dialog, onClose, plan, onChange, onNotify }) {
         </button>
       </div>
       <div className="kd-body">
-        {dialog.type === "settings" ? (
-          <Settings plan={plan} accept={accept} />
-        ) : dialog.type === "product" ? (
+        {dialog.type === "product" ? (
           <Product dialog={dialog} plan={plan} accept={accept} />
-        ) : dialog.type === "employees" ? (
-          <Employees plan={plan} accept={accept} />
         ) : (
           <Report plan={plan} mode={dialog.type} />
         )}
