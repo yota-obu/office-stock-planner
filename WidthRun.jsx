@@ -1,4 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductArt from "./ProductArt.jsx";
 import "./width-run.css";
 
@@ -109,10 +110,48 @@ export default function WidthRun({ entries }) {
         </div>
       </div>
       {visible.length > 0 && (
-        <small>
-          {format(visible[0].index)}〜{format(visible.at(-1).index)} 個目 / 全{" "}
-          {format(count)} 個
-        </small>
+        <div className="widthRunFooter">
+          {length > view.width && (
+            <button
+              type="button"
+              aria-label="前の製品を表示"
+              disabled={view.left <= 0}
+              onClick={() =>
+                viewport.current.scrollBy({
+                  left: -Math.max(
+                    1,
+                    (view.width * 0.85 * (track - view.width)) /
+                      (length - view.width),
+                  ),
+                })
+              }
+            >
+              <ChevronLeft size={16} />
+            </button>
+          )}
+          <small>
+            {format(visible[0].index)}〜{format(visible.at(-1).index)} 個目 / 全{" "}
+            {format(count)} 個
+          </small>
+          {length > view.width && (
+            <button
+              type="button"
+              aria-label="次の製品を表示"
+              disabled={view.left >= track - view.width - 1}
+              onClick={() =>
+                viewport.current.scrollBy({
+                  left: Math.max(
+                    1,
+                    (view.width * 0.85 * (track - view.width)) /
+                      (length - view.width),
+                  ),
+                })
+              }
+            >
+              <ChevronRight size={16} />
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

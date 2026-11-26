@@ -226,6 +226,17 @@ export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
   );
   return (
     <div className="dg-layout">
+      <button
+        className="dg-jump"
+        onClick={() => {
+          const result = document.getElementById("diagnosis-results");
+          result?.focus({ preventScroll: true });
+          result?.scrollIntoView({ block: "start" });
+        }}
+      >
+        診断結果を見る <span>{format(plan.qty)} セット</span>
+        <ChevronDown size={15} />
+      </button>
       <section className="dg-form">
         <div className="dg-block">
           <h2>備蓄する人数と日数</h2>
@@ -358,7 +369,12 @@ export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
           </div>
         </details>
       </section>
-      <section className="dg-result">
+      <section
+        className="dg-result"
+        id="diagnosis-results"
+        tabIndex={-1}
+        aria-label="おすすめの備蓄プラン"
+      >
         <div className="dg-result-heading">
           <ListChecks size={22} />
           <h2>おすすめの備蓄プラン</h2>

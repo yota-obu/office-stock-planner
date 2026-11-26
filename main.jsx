@@ -193,6 +193,11 @@ function App() {
           .toLowerCase()
           .includes(query.trim().toLowerCase()),
     );
+  const hasFilters = Boolean(query.trim()) || cat !== "すべて";
+  function resetFilters() {
+    Q("");
+    C("すべて");
+  }
   const shelfView = useRef(null),
     scrollToNew = useRef(false);
   const racks = plan.rows.length / cfg.levels;
@@ -412,14 +417,19 @@ function App() {
       <div className="panelheading">
         <h2>
           <LibraryBig />
-          製品カタログ
+          {page === "catalog" ? "製品を探す" : "製品カタログ"}
         </h2>
-        <span className="tinycount">{products.length} 製品</span>
+        <span className="tinycount" role="status">
+          {hasFilters ? visible.length + " / " : ""}
+          {products.length} 製品
+        </span>
       </div>
       <div className="filters">
         <label className="search">
           <Search size={16} />
           <input
+            type="search"
+            aria-label="製品名・品番・内容物で検索"
             placeholder="製品名・品番・内容物で検索"
             value={query}
             onChange={(e) => Q(e.target.value)}
@@ -443,6 +453,12 @@ function App() {
           <ChevronDown size={13} />
         </label>
       </div>
+      {hasFilters && (
+        <button type="button" className="filterReset" onClick={resetFilters}>
+          <X size={14} />
+          絞り込みを解除
+        </button>
+      )}
       <div className="productlist">
         {visible.map((p) => (
           <article
@@ -528,7 +544,11 @@ function App() {
             )}
           </article>
         ))}
-        {!visible.length && <p className="empty">該当する製品がありません。</p>}
+        {!visible.length && (
+          <p className="empty">
+            一致する製品がありません。品番や内容物の一部でも検索できます。
+          </p>
+        )}
       </div>
     </CatalogPanel>
   );
@@ -598,15 +618,14 @@ function App() {
             </>
           )}
         </button>
-        <nav id="planner-nav">
+        <nav id="planner-nav" aria-label="メインメニュー">
           {links.map(([id, I, label]) => (
             <button
               key={id}
               aria-label={label}
+              aria-current={page === id ? "page" : undefined}
               title={compact ? label : undefined}
-              className={
-                dialog?.type === id || (!dialog && page === id) ? "active" : ""
-              }
+              className={page === id ? "active" : ""}
               onClick={() => navigate(id)}
             >
               <I size={18} />
@@ -647,7 +666,8 @@ function App() {
                   title="このページの使い方"
                   onClick={() => D({ type: "help", pageOnly: true })}
                 >
-                  <CircleHelp size={20} />
+                  <CircleHelp size={17} />
+                  <span>この画面の使い方</span>
                 </button>
               </div>
               <p>{descriptions[page]}</p>

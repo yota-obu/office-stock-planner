@@ -389,3 +389,10 @@
 .dg-result button.dg-apply:hover:not(:disabled) {
   background-color: #254930;
 }
+
+.dg-layout .dg-jump {display:none}
+.dg-result:focus-visible {outline:2px solid #68855f;outline-offset:3px}
+@media(max-width:800px){
+  .dg-layout .dg-jump {display:flex;align-items:center;gap:7px;border:1px solid #cad9c7;border-radius:9px;background:#edf4e9;padding:10px 13px;text-align:left;font-size:13px;font-weight:650;color:#35563c}
+  .dg-jump span {margin-left:auto;font-variant-numeric:tabular-nums}
+}

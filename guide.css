@@ -133,3 +133,99 @@
     padding: 17px;
   }
 }
+.guideDialog {
+  width: min(970px, 96vw);
+}
+.guideInner header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.guideWalkthrough {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 25px;
+  align-items: start;
+  margin-top: 18px;
+}
+.guideWalkthrough ol {
+  margin: 0;
+}
+.guideScreenshot {
+  margin: 0;
+  min-width: 0;
+}
+.guideThumbnail {
+  display: block;
+  width: 100%;
+  border: 1px solid #cad6cb;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 0;
+  background: #f2f6ef;
+}
+.guideThumbnail img {
+  display: block;
+  width: 100%;
+}
+.guideThumbnail span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  color: #335840;
+  font-size: 13px;
+  font-weight: 650;
+}
+.guideThumbnail:hover {
+  border-color: #698b71;
+}
+.guideViewer {
+  padding: 0;
+  width: min(1560px, 96vw);
+  max-height: 94dvh;
+  border: 0;
+  border-radius: 10px;
+  background: white;
+  color: #283e32;
+}
+.guideViewer::backdrop {
+  background: #15221be8;
+}
+.guideViewerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 15px;
+}
+.guideViewerBar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 12px;
+  background: #edf3eb;
+  border-radius: 7px;
+}
+.guideViewerCanvas {
+  overflow: auto;
+  max-height: calc(92dvh - 60px);
+  overscroll-behavior: contain;
+}
+.guideViewerCanvas img {
+  display: block;
+  width: max(100%, 1060px);
+  max-width: none;
+}
+.guideInner :focus-visible {
+  outline: 2px solid #3d7050;
+  outline-offset: -2px;
+}
+@media (max-width: 760px) {
+  .guideWalkthrough {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}

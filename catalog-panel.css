@@ -27,3 +27,15 @@
 .catalog.panel.wide .product:focus-within {outline:3px solid #b7823b;outline-offset:1px}
 @media(hover:hover){.catalog.panel.wide .product:hover{border-color:#a3b89f;box-shadow:0 4px 13px #283c2a16}}
 @media(max-width:630px){.catalog.panel.wide .productlist{grid-template-columns:repeat(2,minmax(0,1fr));padding:9px;gap:8px}.catalog.panel.wide .thumb{height:94px;padding:8px}.catalog.panel.wide .productcopy{padding:9px}.catalog.panel.wide .productcopy strong{font-size:12px}}
+
+.catalog.panel.wide .filters .search {flex:1;max-width:600px}
+.catalog.panel.wide .productopen .thumb {position:relative}
+.catalog.panel.wide .productopen .thumb::after {
+  content:"";position:absolute;bottom:0;left:0;width:34px;height:3px;
+  background:var(--pack-color);opacity:.85;
+}
+@media(max-width:630px){
+  .catalog.panel.wide .filters {padding:8px 12px 12px;gap:7px}
+  .catalog.panel.wide .filters .search {min-width:100%}
+  .catalog.panel.wide .productcopy small {font-size:11px}
+}

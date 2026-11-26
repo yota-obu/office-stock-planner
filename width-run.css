@@ -43,3 +43,35 @@
 .widthCalc > .wcResult {
   min-width: 0;
 }
+.widthRunFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+  color: #425749;
+  font-variant-numeric: tabular-nums;
+}
+.widthRunFooter small {
+  font-size: 12px;
+}
+.widthRunFooter button {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  min-height: 34px;
+  color: #294c39;
+  background: #fff;
+  border: 1px solid #becbbf;
+  border-radius: 6px;
+}
+.widthRunFooter button:disabled {
+  color: #929c92;
+  border-color: #d9e0d7;
+}
+@media (max-width: 720px) {
+  .widthRunFooter button {
+    min-height: 40px;
+    min-width: 40px;
+  }
+}

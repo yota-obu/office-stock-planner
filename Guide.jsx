@@ -9,6 +9,7 @@ import {
   CircleHelp,
   X,
   ChevronDown,
+  ZoomIn,
 } from "lucide-react";
 import "./guide.css";
 
@@ -28,7 +29,7 @@ const sections = {
       ],
       [
         "提案内容を棚に反映する",
-        "製品別の箱数・概算金額・追加で確保する水量を確認します。「このプランを棚に配置」で現在の配置を提案内容に入れ替えます。",
+        "スマートフォンでは「診断結果を見る」で結果に移動できます。製品別の箱数・概算金額・追加で確保する水量を確認します。「このプランを棚に配置」で現在の配置を提案内容に入れ替えます。",
       ],
     ],
   },
@@ -66,7 +67,7 @@ const sections = {
       ],
       [
         "横一列の幅と使用段数を読む",
-        "合計幅は製品ごとの背幅×数量の合計です。複数品番の段数は、指定した順に、箱を分割せず空の段へ詰めた結果です。",
+        "合計幅は製品ごとの背幅×数量の合計です。箱が画面に収まらないときは、製品列の下の矢印か横スクロールで続きを確認できます。複数品番の段数は、指定した順に、箱を分割せず空の段へ詰めた結果です。",
       ],
       [
         "棚の内幅を変えて比較する",
@@ -81,7 +82,7 @@ const sections = {
     steps: [
       [
         "用途やキーワードで絞り込む",
-        "製品名・品番・内容物で検索できます。保存水や軍手など、中に入っているアイテムから該当する製品を探せます。",
+        "製品名・品番・内容物で検索できます。「保存水」「軍手」などを入力すると、見出しの件数が更新されます。「絞り込みを解除」で全製品に戻れます。",
       ],
       [
         "仕様と内容を確認する",
@@ -153,6 +154,65 @@ const sections = {
   },
 };
 const tabs = Object.keys(sections);
+
+const screenDescriptions = {
+  diagnosis: "人数・日数と必要な備蓄品を選び、提案された製品を確認する診断画面",
+  shelf: "棚の配置図と、棚に追加する防災セットを並べたシミュレーター画面",
+  width: "選んだ製品と数量から、必要な棚幅を確認する画面",
+  catalog: "防災セットをキーワードや用途で探す製品カタログ",
+  proposal: "提案書・見積書の種類や宛名、出力形式を選ぶ資料作成画面",
+};
+
+function GuideScreenshot({ id }) {
+  const viewer = useRef(null);
+  const src = `${import.meta.env.BASE_URL}guide/${id}.webp`;
+  const label = sections[id].title + "の画面";
+  return (
+    <figure className="guideScreenshot">
+      <button
+        className="guideThumbnail"
+        type="button"
+        aria-label={label + "を拡大"}
+        onClick={() => viewer.current.showModal()}
+      >
+        <img src={src} alt={screenDescriptions[id]} />
+        <span>
+          <ZoomIn size={16} /> 画面を拡大
+        </span>
+      </button>
+      <dialog
+        className="guideViewer"
+        ref={viewer}
+        aria-label={label + "の拡大表示"}
+        onCancel={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (e.target === viewer.current) viewer.current.close();
+        }}
+      >
+        <div className="guideViewerBar">
+          <strong>{label}</strong>
+          <button
+            type="button"
+            autoFocus
+            aria-label="拡大表示を閉じる"
+            onClick={() => viewer.current.close()}
+          >
+            <X size={19} />
+            閉じる
+          </button>
+        </div>
+        <div
+          className="guideViewerCanvas"
+          tabIndex={0}
+          aria-label="拡大画像。矢印キーでスクロールできます"
+        >
+          <img src={src} alt={screenDescriptions[id]} />
+        </div>
+      </dialog>
+    </figure>
+  );
+}
 
 export default function Guide({ initialTab, pageTitle, onClose }) {
   const [active, setActive] = useState(() =>
@@ -258,14 +318,17 @@ export default function Guide({ initialTab, pageTitle, onClose }) {
                     </details>
                   ))
                 ) : (
-                  <ol>
-                    {current.steps.map(([title, body]) => (
-                      <li key={title}>
-                        <h4>{title}</h4>
-                        <p>{body}</p>
-                      </li>
-                    ))}
-                  </ol>
+                  <div className="guideWalkthrough">
+                    <GuideScreenshot id={id} />
+                    <ol>
+                      {current.steps.map(([title, body]) => (
+                        <li key={title}>
+                          <h4>{title}</h4>
+                          <p>{body}</p>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
                 )}
               </>
             )}
