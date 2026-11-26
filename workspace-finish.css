@@ -44,3 +44,35 @@
     transition: none;
   }
 }
+
+/* A thin edge and a short shadow distinguish actions from static surfaces. */
+.app :is(.smallbutton, .quickadd, .expand),
+.shelf-confirmation .smallbutton {
+  border: 1px solid #9eafa2;
+  border-radius: 8px;
+  background: linear-gradient(#fff, #f4f7f3);
+  color: #314b3a;
+  box-shadow: inset 0 1px #fff, 0 2px 2px #233e2812;
+}
+
+.app :is(.dg-apply, .proposalAction),
+.kd-primary, .shelf-confirmation .primary, .spine-picker .primary {
+  border: 1px solid #214532;
+  background: linear-gradient(175deg, #416d52, #284b38);
+  color: #fff;
+  box-shadow: inset 0 1px #ffffff38, 0 2px 4px #20402b26;
+}
+
+@media (hover: hover) {
+  .app :is(.smallbutton, .quickadd, .expand):enabled:hover,
+  .shelf-confirmation .smallbutton:hover {
+    border-color: #698570;
+    background: #edf4ed;
+    box-shadow: 0 3px 6px #233e281c;
+  }
+}
+
+.app :is(.smallbutton, .quickadd, .expand, .dg-apply, .proposalAction):enabled:active,
+.kd-primary:enabled:active, .shelf-confirmation button:active, .spine-picker .primary:active {
+  box-shadow: inset 0 2px 4px #142b1a30;
+}
