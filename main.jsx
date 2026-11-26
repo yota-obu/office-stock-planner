@@ -11,6 +11,8 @@ import {
   LibraryBig,
   ReceiptText,
   PanelTop,
+  PanelLeftClose,
+  PanelLeftOpen,
   Box,
   Boxes,
   ChartNoAxesColumnIncreasing,
@@ -139,6 +141,21 @@ function Logo() {
   );
 }
 function App() {
+  const [compact, setCompact] = useState(() => {
+    try {
+      const saved = localStorage.getItem("stock-sidebar-compact");
+      if (saved !== null) return saved === "1";
+    } catch {}
+    return window.matchMedia("(max-width:940px)").matches;
+  });
+  function toggleSidebar() {
+    const next = !compact;
+    setCompact(next);
+    if (window.matchMedia("(max-width:720px)").matches) N(!next);
+    try {
+      localStorage.setItem("stock-sidebar-compact", next ? "1" : "0");
+    } catch {}
+  }
   const [loaded] = useState(readPlan);
   const [notice, setNotice] = useState(loaded.notice);
   const [plan, setPlan] = useState(loaded.plan),
@@ -265,6 +282,15 @@ function App() {
       scrollToNew.current = false;
     }
   }, [racks, cfg.width, cfg.height, cfg.levels]);
+  const lastRackCount = plan.rows
+    .slice(-cfg.levels)
+    .reduce((sum, row) => sum + row.length, 0);
+  function removeRack() {
+    if (racks <= 1) return;
+    changePlan({ ...plan, rows: plan.rows.slice(0, -cfg.levels) });
+    D(null);
+    notify("右端の棚を1台減らしました");
+  }
   const maxZoom = Math.max(3, racks);
   const rowLabel = (i) =>
     (racks > 1 ? "棚" + (Math.floor(i / cfg.levels) + 1) + "・" : "") +
@@ -587,7 +613,7 @@ function App() {
   );
   return (
     <div
-      className="app"
+      className={"app" + (compact ? " compactNav" : "")}
       onPointerMove={touchMove}
       onPointerUp={touchEnd}
       onPointerCancel={() => {
@@ -634,29 +660,50 @@ function App() {
       )}
       <aside className={nav ? "open" : ""}>
         <Logo />
-        <nav>
+        <button
+          className="sidebarSwitch"
+          onClick={toggleSidebar}
+          aria-expanded={!compact}
+          aria-controls="planner-nav"
+          aria-label={compact ? "メニューを広げる" : "メニューを折りたたむ"}
+          title={compact ? "メニューを広げる" : "メニューを折りたたむ"}
+        >
+          {compact ? (
+            <PanelLeftOpen size={18} />
+          ) : (
+            <>
+              <PanelLeftClose size={18} />
+              折りたたむ
+            </>
+          )}
+        </button>
+        <nav id="planner-nav">
           {links.map(([id, I, label]) => (
             <button
               key={id}
+              aria-label={label}
+              title={compact ? label : undefined}
               className={
                 dialog?.type === id || (!dialog && page === id) ? "active" : ""
               }
               onClick={() => navigate(id)}
             >
               <I size={18} />
-              {label}
+              {!compact && label}
             </button>
           ))}
         </nav>
         <div className="sidebarfoot">
           <button
+            aria-label="使い方ガイド"
+            title={compact ? "使い方ガイド" : undefined}
             onClick={() => {
               N(false);
               D({ type: "help" });
             }}
           >
             <CircleHelp size={17} />
-            使い方ガイド
+            {!compact && "使い方ガイド"}
           </button>
         </div>
       </aside>
@@ -797,24 +844,45 @@ function App() {
                     </h2>
                     <div className="rackActions">
                       <TierControl plan={plan} commit={commit} />
-                      <button
-                        className="smallbutton"
-                        onClick={() => {
-                          scrollToNew.current = true;
-                          setBrowseShelves(true);
-                          changePlan({
-                            ...plan,
-                            rows: [
-                              ...plan.rows,
-                              ...Array.from({ length: cfg.levels }, () => []),
-                            ],
-                          });
-                          notify("右側に棚を1台追加しました");
-                        }}
+                      <div
+                        className="tier-control rackCountGroup"
+                        role="group"
+                        aria-label="棚の台数"
                       >
-                        <Plus size={14} />
-                        棚を追加
-                      </button>
+                        <button
+                          aria-label="棚を減らす"
+                          title="右端の棚を減らす"
+                          disabled={racks <= 1}
+                          onClick={() =>
+                            lastRackCount
+                              ? D({ type: "removeRack" })
+                              : removeRack()
+                          }
+                        >
+                          <Minus size={15} />
+                        </button>
+                        <b aria-live="polite" aria-atomic="true">
+                          {racks} 台
+                        </b>
+                        <button
+                          aria-label="棚を追加"
+                          title="棚を追加"
+                          onClick={() => {
+                            scrollToNew.current = true;
+                            setBrowseShelves(true);
+                            changePlan({
+                              ...plan,
+                              rows: [
+                                ...plan.rows,
+                                ...Array.from({ length: cfg.levels }, () => []),
+                              ],
+                            });
+                            notify("右側に棚を1台追加しました");
+                          }}
+                        >
+                          <Plus size={15} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div className="shelftools">
@@ -828,13 +896,6 @@ function App() {
                     >
                       <Trash2 size={14} />
                       棚を空にする
-                    </button>
-                    <button
-                      className="proposal"
-                      onClick={() => D({ type: "proposal" })}
-                    >
-                      <FileText size={14} />
-                      提案書を作成
                     </button>
                   </div>
                   <div className="canvas">
@@ -1149,6 +1210,15 @@ function App() {
                       );
                     })}
                   </div>
+                  <div className="proposalFooter">
+                    <button
+                      className="primary"
+                      onClick={() => D({ type: "proposal" })}
+                    >
+                      <FileText size={16} />
+                      提案書を作成
+                    </button>
+                  </div>
                 </section>
                 {catalog}
               </div>
@@ -1199,6 +1269,24 @@ function App() {
           onClose={() => D(null)}
           onNotify={notify}
         />
+      ) : dialog?.type === "removeRack" ? (
+        <div className="helpback">
+          <section
+            className="help"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="remove-rack-title"
+          >
+            <h2 id="remove-rack-title">棚 {racks} を取り外しますか？</h2>
+            <p>この棚にある{lastRackCount}セットも配置から取り出します。</p>
+            <button className="smallbutton" autoFocus onClick={() => D(null)}>
+              キャンセル
+            </button>
+            <button className="primary" onClick={removeRack}>
+              棚を取り外す
+            </button>
+          </section>
+        </div>
       ) : dialog?.type === "clear" ? (
         <div className="helpback">
           <section role="alertdialog" aria-modal="true" className="help">

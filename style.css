@@ -768,30 +768,6 @@ h1 {
     padding-inline: 17px;
   }
 }
-@media (max-width: 940px) {
-  aside {
-    width: 64px;
-  }
-  .brand {
-    margin: 24px auto 33px;
-  }
-  .brand span,
-  .sidebarfoot span {
-    display: none;
-  }
-  .app nav button,
-  .sidebarfoot button {
-    font-size: 0;
-    gap: 0;
-    justify-content: center;
-  }
-  .sidebarfoot {
-    margin-inline: 4px;
-  }
-  main {
-    margin-left: 64px;
-  }
-}
 @media (max-width: 720px) {
   aside {
     width: 212px;
@@ -1347,4 +1323,97 @@ header,
   color: #743c14;
   font: 650 11px/1.4 sans-serif;
   letter-spacing: 0;
+}
+
+.sidebarSwitch {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #dbe4da;
+  border: 1px solid #52685c;
+  border-radius: 6px;
+  min-height: 32px;
+  align-self: flex-start;
+  margin: 0 14px 14px;
+  padding: 5px 10px;
+  font-size: 11px;
+}
+.brand {
+  margin-bottom: 16px;
+}
+.compactNav aside {
+  width: 58px;
+  transform: none;
+}
+.compactNav main {
+  margin-left: 58px;
+}
+.compactNav .brand {
+  margin: 23px auto 14px;
+}
+.compactNav .brand span,
+.compactNav .menubtn {
+  display: none;
+}
+.compactNav .sidebarSwitch {
+  margin: 0 auto 12px;
+}
+.compactNav nav {
+  padding: 0 5px;
+}
+.compactNav nav button,
+.compactNav .sidebarfoot button {
+  justify-content: center;
+  padding: 0;
+  width: 100%;
+}
+.compactNav .sidebarfoot {
+  margin-inline: 5px;
+}
+.proposalFooter {
+  padding: 12px 16px;
+  border-top: 1px solid #dce3da;
+  display: flex;
+  justify-content: flex-end;
+}
+.rackCountGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rackCountGroup strong {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.panelheading:has(.rackActions) {
+  min-height: 62px;
+  height: auto;
+  padding-block: 9px;
+  flex-wrap: wrap;
+}
+.rackActions {
+  flex-wrap: wrap;
+}
+.rackCountGroup .smallbutton {
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .compactNav aside {
+    width: 44px;
+  }
+  .compactNav main {
+    margin-left: 44px;
+  }
+  .compactNav .brand svg {
+    width: 26px;
+  }
+  .compactNav .sidebarSwitch {
+    padding: 5px;
+  }
+  .compactNav .sidebarfoot {
+    margin-inline: 1px;
+  }
+  .compactNav nav {
+    padding: 0 2px;
+  }
 }
