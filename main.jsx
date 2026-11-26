@@ -28,7 +28,6 @@ import {
   Menu,
   X,
   Layers3,
-  LayoutDashboard,
   Info,
 } from "lucide-react";
 import { products } from "./catalog.js";
@@ -706,23 +705,6 @@ function App() {
         </div>
       </aside>
       <main>
-        <header>
-          <button
-            className="menubtn"
-            aria-label="メニュー"
-            onClick={() => N(true)}
-          >
-            <Menu />
-          </button>
-          <LayoutDashboard size={15} />
-          <span>ワークスペース</span>
-          <ChevronRight size={13} />
-          <b>{titles[page]}</b>
-          <div className="save">
-            <i />
-            {saved ? "端末に自動保存" : "端末への保存に失敗"}
-          </div>
-        </header>
         <div className="body">
           {notice && (
             <div className="migration" role="status">
@@ -736,7 +718,19 @@ function App() {
               </button>
             </div>
           )}
+          {!saved && (
+            <p className="migration" role="status">
+              端末への保存に失敗しました。
+            </p>
+          )}
           <div className="title">
+            <button
+              className="menubtn"
+              aria-label="メニュー"
+              onClick={() => N(true)}
+            >
+              <Menu />
+            </button>
             <div>
               <h1>{titles[page]}</h1>
               <p>{descriptions[page]}</p>

@@ -1419,4 +1419,16 @@ header,
   }
 }
 
-@media(min-width:721px) and (max-width:1170px){.app:not(.compactNav) .brand{margin-inline:12px;gap:8px}}
+@media (min-width: 721px) and (max-width: 1170px) {
+  .app:not(.compactNav) .brand {
+    margin-inline: 12px;
+    gap: 8px;
+  }
+}
+.title {
+  justify-content: flex-start;
+}
+.title .menubtn {
+  align-self: flex-start;
+  margin-top: 3px;
+}
