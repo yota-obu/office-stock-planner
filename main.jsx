@@ -84,6 +84,31 @@ function readPlan() {
     const p = JSON.parse(
       localStorage.getItem(key) ?? localStorage.getItem("kokobo-shelf-v1"),
     );
+    if (
+      p?.config?.levels > 5 &&
+      p.config.levels <= 10 &&
+      Array.isArray(p.rows)
+    ) {
+      const levels = p.config.levels;
+      const rows = [];
+      for (let i = 0; i < p.rows.length; i += levels) {
+        rows.push(...p.rows.slice(i, i + levels));
+        while (rows.length % 5) rows.push([]);
+      }
+      const migrated = {
+        config: {
+          ...p.config,
+          levels: 5,
+          height: Math.max(50, Math.ceil((p.config.height * 5) / levels)),
+        },
+        rows,
+      };
+      if (isValidPlan(migrated))
+        return {
+          plan: migrated,
+          notice: "保存済みの6段以上の棚を、5段ずつ横並びに分けました。",
+        };
+    }
     if (p && isValidPlan(p)) return { plan: p };
     if (p?.rows?.flat().includes("SYS-200") && p.config.depth < 222) {
       const repaired = { ...p, config: { ...p.config, depth: 222 } };
@@ -185,6 +210,7 @@ function App() {
       return result;
     }
     changePlan(result.plan);
+    setBrowseShelves(false);
     navigate("shelf");
     notify("おすすめの製品を棚に配置しました");
     return result;
@@ -227,9 +253,17 @@ function App() {
           .toLowerCase()
           .includes(query.trim().toLowerCase()),
     );
+  const [itemsOpen, setItemsOpen] = useState(false);
+  const [browseShelves, setBrowseShelves] = useState(false);
+  const shelfView = useRef(null),
+    scrollToNew = useRef(false);
   const racks = plan.rows.length / cfg.levels;
   useEffect(() => {
     Z(1);
+    if (scrollToNew.current && shelfView.current) {
+      shelfView.current.scrollLeft = shelfView.current.scrollWidth;
+      scrollToNew.current = false;
+    }
   }, [racks, cfg.width, cfg.height, cfg.levels]);
   const maxZoom = Math.max(3, racks);
   const rowLabel = (i) =>
@@ -425,7 +459,6 @@ function App() {
     ["shelf", PanelTop, "棚シミュレーター"],
     ["width", Ruler, "必要幅を計算"],
     ["catalog", LibraryBig, "製品カタログ"],
-    ["estimate", ReceiptText, "見積もり・集計"],
   ];
   const catalog = (
     <section className={"catalog panel " + (page === "catalog" ? "wide" : "")}>
@@ -618,7 +651,6 @@ function App() {
             <CircleHelp size={17} />
             使い方ガイド
           </button>
-          <span>KING JIM 製品対応</span>
         </div>
       </aside>
       <main>
@@ -756,7 +788,27 @@ function App() {
                       <PanelTop />
                       棚プレビュー
                     </h2>
-                    <TierControl plan={plan} commit={commit} />
+                    <div className="rackActions">
+                      <TierControl plan={plan} commit={commit} />
+                      <button
+                        className="smallbutton"
+                        onClick={() => {
+                          scrollToNew.current = true;
+                          setBrowseShelves(true);
+                          changePlan({
+                            ...plan,
+                            rows: [
+                              ...plan.rows,
+                              ...Array.from({ length: cfg.levels }, () => []),
+                            ],
+                          });
+                          notify("右側に棚を1台追加しました");
+                        }}
+                      >
+                        <Plus size={14} />
+                        棚を追加
+                      </button>
+                    </div>
                   </div>
                   <div className="shelftools">
                     <button onClick={undo} disabled={!history.current.length}>
@@ -800,6 +852,8 @@ function App() {
                         "shelfscroll fitCanvas" +
                         (racks > 1 ? " multiRack" : "")
                       }
+                      ref={shelfView}
+                      data-browse={browseShelves && racks > 1}
                       tabIndex={racks > 1 ? 0 : undefined}
                       aria-label={
                         racks > 1
@@ -932,9 +986,16 @@ function App() {
                       </button>
                       <button
                         title="全ての棚が収まる倍率に戻す"
-                        onClick={() => Z(1)}
+                        onClick={() => {
+                          setBrowseShelves(false);
+                          Z(1);
+                        }}
                       >
-                        {zoom === 1 ? "全体表示" : Math.round(zoom * 100) + "%"}
+                        {browseShelves && racks > 1
+                          ? "全体表示に戻す"
+                          : zoom === 1
+                            ? "全体表示"
+                            : Math.round(zoom * 100) + "%"}
                       </button>
                       <button
                         title="拡大"
@@ -966,30 +1027,51 @@ function App() {
                       <Dimension axis="depth" plan={plan} commit={commit} />
                     </span>
                   </div>
-                  <details className="picklist">
-                    <summary>棚の製品をリストから選択</summary>
-                    {plan.rows.map((row, i) => (
-                      <fieldset key={i}>
-                        <legend>{rowLabel(i)}</legend>
-                        {row.length ? (
-                          row.map((id, j) => (
-                            <label key={j}>
-                              <input
-                                type="checkbox"
-                                checked={selection.some(
-                                  (v) => v.row === i && v.index === j,
-                                )}
-                                onChange={() => toggleSelection(i, j)}
-                              />
-                              {j + 1}. {lookup[id].name}（{id}）
-                            </label>
-                          ))
-                        ) : (
-                          <small>空き段</small>
-                        )}
-                      </fieldset>
-                    ))}
-                  </details>
+                  {racks > 1 && (
+                    <div className="rackNav">
+                      <button
+                        className="smallbutton"
+                        onClick={() => {
+                          setBrowseShelves(!browseShelves);
+                          Z(1);
+                        }}
+                      >
+                        {browseShelves
+                          ? "全ての棚を表示"
+                          : "横スクロールで見る"}
+                      </button>
+                      {browseShelves && (
+                        <>
+                          <button
+                            aria-label="左の棚へ"
+                            onClick={() =>
+                              shelfView.current.scrollBy({
+                                left:
+                                  -shelfView.current.querySelector(".diagram")
+                                    .offsetWidth - 24,
+                                behavior: "smooth",
+                              })
+                            }
+                          >
+                            ←
+                          </button>
+                          <button
+                            aria-label="右の棚へ"
+                            onClick={() =>
+                              shelfView.current.scrollBy({
+                                left:
+                                  shelfView.current.querySelector(".diagram")
+                                    .offsetWidth + 24,
+                                behavior: "smooth",
+                              })
+                            }
+                          >
+                            →
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                   {selection.length > 0 && (
                     <div className="selectiontools">
                       <b>{selection.length}点を選択中</b>
@@ -1064,20 +1146,18 @@ function App() {
                 {catalog}
               </div>
               <section className="panel stockItems">
-                <div className="panelheading">
-                  <h2>
-                    <Boxes />
-                    アイテム別の合計数量
-                  </h2>
+                <h2 className="stockHeading">
                   <button
-                    className="smallbutton"
-                    onClick={() => D({ type: "items" })}
+                    aria-expanded={itemsOpen}
+                    aria-controls="stock-contents"
+                    onClick={() => setItemsOpen(!itemsOpen)}
                   >
-                    用途別に確認
-                    <ChevronRight size={13} />
+                    <Boxes size={18} />
+                    アイテム別の合計数量
+                    <ChevronDown size={16} />
                   </button>
-                </div>
-                <div>
+                </h2>
+                <div id="stock-contents" hidden={!itemsOpen}>
                   {contents
                     .flatMap((group) => group.items)
                     .map((item) => (

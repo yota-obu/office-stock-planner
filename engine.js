@@ -14,7 +14,7 @@ export const limits = {
   width: [50, 4000],
   height: [50, 4000],
   depth: [50, 1500],
-  levels: [1, 10],
+  levels: [1, 5],
 };
 
 function validConfig(config) {

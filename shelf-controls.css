@@ -132,3 +132,21 @@
 .canvaspanel .multiRack .diagram:after {
   display: none;
 }
+.rackActions,
+.rackNav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rackNav {
+  margin: 0 14px 10px;
+}
+.rackNav > button {
+  min-height: 30px;
+}
+.canvaspanel .fitCanvas[data-browse="true"] .diagram {
+  width: calc(min(88cqw, (100cqh - 2px) * var(--ratio)) * var(--zoom));
+}
+.fitCanvas[data-browse="true"] .rackStrip {
+  gap: 24px;
+}

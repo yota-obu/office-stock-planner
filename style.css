@@ -1316,3 +1316,25 @@ header,
     font-size: 12px;
   }
 }
+.stockHeading {
+  margin: 0;
+}
+.stockHeading button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 18px;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 700;
+}
+.stockHeading svg:last-child {
+  margin-left: auto;
+}
+.stockHeading [aria-expanded="true"] svg:last-child {
+  transform: rotate(180deg);
+}
+.stockItems #stock-contents[hidden] {
+  display: none;
+}
