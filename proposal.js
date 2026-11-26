@@ -322,11 +322,11 @@ function paintTable(ctx, node) {
     });
   });
 }
-async function pdfFile(pages, filename) {
+async function pdfFile(pages, filename, title = "提案書") {
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ format: "a4", unit: "mm", compress: true });
   pdf.setProperties({
-    title: "提案書",
+    title,
     creator: "防災備蓄プランナー",
   });
   const canvas = document.createElement("canvas"),
@@ -397,11 +397,11 @@ function powerTable(slide, n) {
     paraSpaceBefore: 0,
   });
 }
-async function powerFile(pages, filename) {
+async function powerFile(pages, filename, title = "提案書") {
   const { default: PptxGenJS } = await import("pptxgenjs");
   const ppt = new PptxGenJS();
   ppt.author = "防災備蓄プランナー";
-  ppt.title = "提案書";
+  ppt.title = title;
   ppt.defineLayout({ name: "A4", width: inch(210), height: inch(297) });
   ppt.layout = "A4";
   ppt.theme = {
@@ -459,7 +459,14 @@ async function powerFile(pages, filename) {
   }
   await ppt.writeFile({ fileName: filename + ".pptx", compression: true });
 }
-export async function createProposal(plan, assumptions = {}, format = "pdf") {
+export async function createProposal(
+  plan,
+  assumptions = {},
+  format = "pdf",
+  kind = "proposal",
+) {
+  if (kind === "estimate")
+    return createEstimate(plan, format, assumptions.recipient);
   const stats = summarize(plan),
     imgs = await shelfImages(stats.lines);
   const opts = {
@@ -475,4 +482,126 @@ export async function createProposal(plan, assumptions = {}, format = "pdf") {
   const name = (safe ? safe + "_" : "") + "提案書";
   if (format === "pptx") return powerFile(pages, name);
   return pdfFile(pages, name);
+}
+
+export async function createEstimate(plan, format = "pdf", recipient = "") {
+  const stats = summarize(plan);
+  const imgs = await shelfImages(stats.lines);
+  const date = new Date().toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "Asia/Tokyo",
+  });
+  const name = String(recipient)
+    .trim()
+    .replace(/\s*御中\s*$/u, "");
+  const pages = [];
+  let offset = 0;
+  do {
+    const first = pages.length === 0;
+    const page = pageModel();
+    pages.push(page);
+    heading(
+      page,
+      first ? "概算見積書" : "製品別見積明細（続き）",
+      date,
+      !first,
+    );
+    if (first) {
+      if (name) page.text(name + " 御中", 12, 24, 186, 8, 4.2, { bold: true });
+      page.text("棚の配置図", 12, 36, 186, 8, 4.5, { bold: true });
+      drawShelf(page, plan, imgs, 12, 47, 119, 62);
+      const { width, height, levels } = plan.config;
+      page.text(
+        `幅 ${nf(width)} × 高さ ${nf(height)} mm  /  ${levels}段 × ${plan.rows.length / levels}台`,
+        12,
+        110,
+        119,
+        6,
+        3,
+        { color: muted },
+      );
+      page.text("見積対象", 138, 51, 60, 6, 3.3, { color: muted });
+      page.text(
+        `${nf(stats.lines.length)} 製品 ・ ${nf(stats.count)} セット`,
+        138,
+        60,
+        60,
+        9,
+        4.2,
+        { bold: true },
+      );
+      page.rect(137, 78, 61, 25, accent);
+      page.text("概算合計（税込）", 141, 80, 53, 7, 3.4, { color: "#ffffff" });
+      page.text(yen(stats.price), 141, 88, 53, 12, 6, {
+        align: "right",
+        bold: true,
+        color: "#ffffff",
+      });
+    }
+    const tableTop = first ? 130 : 46;
+    const segment = stats.lines.slice(offset, offset + (first ? 15 : 25));
+    page.text("製品別の見積明細", 12, tableTop - 11, 186, 7, 4.2, {
+      bold: true,
+    });
+    const rows = [
+      ["製品名", "品番", "税込単価", "数量", "税込小計"],
+      ...segment.map(({ product: p, count }) => [
+        p.name + (p.discontinued ? " ※" : ""),
+        p.id,
+        yen(p.price),
+        nf(count),
+        yen(p.price * count),
+      ]),
+    ];
+    page.table(12, tableTop, [76, 34, 26, 18, 32], rows, 7.4, {
+      numeric: [2, 3, 4],
+      size: 3,
+    });
+    offset += segment.length;
+    if (offset === stats.lines.length) {
+      page.text(
+        "合計（税込）",
+        12,
+        tableTop + rows.length * 7.4 + 3,
+        90,
+        8,
+        3.8,
+        { bold: true },
+      );
+      page.text(
+        yen(stats.price),
+        110,
+        tableTop + rows.length * 7.4 + 3,
+        88,
+        8,
+        4.5,
+        { bold: true, align: "right" },
+      );
+    }
+    page.text(
+      "掲載時の税込単価に基づく概算です。送料は別途ご確認ください。",
+      12,
+      268,
+      186,
+      5,
+      3,
+      { color: muted },
+    );
+    if (segment.some(({ product }) => product.discontinued))
+      page.text(
+        "※ 販売終了品には最終掲載価格を使用しています。",
+        12,
+        275,
+        186,
+        5,
+        3,
+        { color: muted },
+      );
+  } while (offset < stats.lines.length);
+  pages.forEach((page, i) => footer(page, i, pages.length));
+  const filename = "防災備蓄_概算見積書";
+  if (format === "pptx") return powerFile(pages, filename, "概算見積書");
+  return pdfFile(pages, filename, "概算見積書");
 }

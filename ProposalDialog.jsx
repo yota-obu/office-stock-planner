@@ -5,6 +5,7 @@ import "./proposal-dialog.css";
 
 export default function ProposalDialog({
   plan,
+  initialKind = "proposal",
   assumptions = {},
   onAssumptions,
   onClose,
@@ -14,6 +15,11 @@ export default function ProposalDialog({
   const [recipient, setRecipient] = useState(assumptions.recipient || "");
   const [people, setPeople] = useState(String(assumptions.people || 10));
   const [days, setDays] = useState(String(assumptions.days || 3));
+  const [kind, setKind] = useState(
+    initialKind === "estimate" ? "estimate" : "proposal",
+  );
+  const isProposal = kind === "proposal";
+  const documentName = isProposal ? "提案書" : "見積書";
   const [format, setFormat] = useState("pdf");
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -28,17 +34,17 @@ export default function ProposalDialog({
     const values = {
       ...assumptions,
       recipient: recipient.trim().replace(/\s*御中\s*$/u, ""),
-      people: Number(people),
-      days: Number(days),
+      people: isProposal ? Number(people) : assumptions.people || 10,
+      days: isProposal ? Number(days) : assumptions.days || 3,
     };
     setBusy(true);
     setError("");
     try {
       const { createProposal } = await import("./proposal.js");
-      await createProposal(plan, values, format);
+      await createProposal(plan, values, format, kind);
       onAssumptions?.(values);
       onNotify?.(
-        `${format === "pdf" ? "PDF" : "PowerPoint"}の提案書を作成しました。`,
+        `${format === "pdf" ? "PDF" : "PowerPoint"}の${documentName}を作成しました。`,
       );
       onClose();
     } catch (err) {
@@ -61,7 +67,7 @@ export default function ProposalDialog({
         <span className="kd-symbol">
           <FileText size={19} />
         </span>
-        <h2 id="prop-title">提案書を作成</h2>
+        <h2 id="prop-title">資料を作成</h2>
         <button
           type="button"
           aria-label="閉じる"
@@ -71,15 +77,34 @@ export default function ProposalDialog({
           <X size={18} />
         </button>
       </div>
-      <form className="kd-body kd-stack" onSubmit={submit}>
+      <form className="kd-body kd-stack" onSubmit={submit} aria-busy={busy}>
+        <fieldset className="prop-kinds" disabled={busy}>
+          <legend>資料の種類</legend>
+          {[
+            ["proposal", "提案書"],
+            ["estimate", "見積書"],
+          ].map(([value, label]) => (
+            <label key={value}>
+              <input
+                type="radio"
+                name="document-kind"
+                value={value}
+                checked={kind === value}
+                onChange={() => setKind(value)}
+              />
+              <span>{label}</span>
+            </label>
+          ))}
+        </fieldset>
         <p>
-          防災セット配置イメージ、製品別の見積明細、内容物の数量と用途をまとめて出力します。
+          {isProposal
+            ? "棚の配置図、製品別の見積明細、内容物の数量と用途をまとめます。"
+            : "棚の配置画像と、製品別の数量・税込単価・小計、税込合計を掲載します。"}
         </p>
         <label className="kd-field">
           宛名（任意）
           <div className="kd-number">
             <input
-              autoFocus
               maxLength="72"
               placeholder="会社名・部署名"
               value={recipient}
@@ -88,39 +113,41 @@ export default function ProposalDialog({
             <span>御中</span>
           </div>
         </label>
-        <div className="kd-grid">
-          <label className="kd-field">
-            対象人数
-            <div className="kd-number">
-              <input
-                required
-                type="number"
-                min="1"
-                max="999999"
-                step="1"
-                value={people}
-                onChange={(e) => setPeople(e.target.value)}
-              />
-              <span>人</span>
-            </div>
-          </label>
-          <label className="kd-field">
-            備蓄日数
-            <div className="kd-number">
-              <input
-                required
-                type="number"
-                min="1"
-                max="365"
-                step="1"
-                value={days}
-                onChange={(e) => setDays(e.target.value)}
-              />
-              <span>日</span>
-            </div>
-          </label>
-        </div>
-        <fieldset className="prop-formats">
+        {isProposal && (
+          <div className="kd-grid">
+            <label className="kd-field">
+              対象人数
+              <div className="kd-number">
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  max="999999"
+                  step="1"
+                  value={people}
+                  onChange={(e) => setPeople(e.target.value)}
+                />
+                <span>人</span>
+              </div>
+            </label>
+            <label className="kd-field">
+              備蓄日数
+              <div className="kd-number">
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  max="365"
+                  step="1"
+                  value={days}
+                  onChange={(e) => setDays(e.target.value)}
+                />
+                <span>日</span>
+              </div>
+            </label>
+          </div>
+        )}
+        <fieldset className="prop-formats" disabled={busy}>
           <legend>出力形式</legend>
           {[
             ["pdf", FileText, "PDF", "A4・印刷用"],
@@ -151,7 +178,7 @@ export default function ProposalDialog({
           <Download size={17} />
           {busy
             ? "作成中…"
-            : `${format === "pdf" ? "PDF" : "PowerPoint"}をダウンロード`}
+            : `${documentName}（${format === "pdf" ? "PDF" : "PowerPoint"}）をダウンロード`}
         </button>
       </form>
     </dialog>

@@ -722,7 +722,7 @@ function App() {
                   onClick={() => D({ type: "proposal" })}
                 >
                   <FileText size={20} />
-                  提案書を作成
+                  資料を作成
                 </button>
               </div>
               <div className="work">
