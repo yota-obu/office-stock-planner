@@ -365,7 +365,8 @@ h1 {
   flex: none;
   margin: auto;
   width: calc(
-    min(76%, (clamp(345px, 33vw, 545px) - 124px) * var(--ratio)) * var(--zoom)
+    min(76%, (clamp(345px, 33vw, 545px) - 124px) * var(--fit-ratio)) *
+      var(--zoom)
   );
   aspect-ratio: var(--ratio);
 }
@@ -680,7 +681,7 @@ h1 {
   flex: 1;
 }
 .fullscreen .diagram {
-  width: calc(min(75%, 62vh * var(--ratio)) * var(--zoom));
+  width: calc(min(75%, 62vh * var(--fit-ratio)) * var(--zoom));
 }
 .helpback,
 .veil {
@@ -878,7 +879,8 @@ h1 {
   }
   .diagram {
     width: calc(
-      min(76%, (clamp(290px, 75vw, 440px) - 112px) * var(--ratio)) * var(--zoom)
+      min(76%, (clamp(290px, 75vw, 440px) - 112px) * var(--fit-ratio)) *
+        var(--zoom)
     );
   }
   .panelheading {
@@ -1037,7 +1039,8 @@ h1 {
 }
 .diagram {
   width: calc(
-    min(76%, (clamp(345px, 33vw, 545px) - 155px) * var(--ratio)) * var(--zoom)
+    min(76%, (clamp(345px, 33vw, 545px) - 155px) * var(--fit-ratio)) *
+      var(--zoom)
   );
 }
 .widthmeasure {
@@ -1049,7 +1052,8 @@ h1 {
 @media (max-width: 720px) {
   .diagram {
     width: calc(
-      min(76%, (clamp(290px, 75vw, 440px) - 150px) * var(--ratio)) * var(--zoom)
+      min(76%, (clamp(290px, 75vw, 440px) - 150px) * var(--fit-ratio)) *
+        var(--zoom)
     );
   }
 }
@@ -1083,4 +1087,50 @@ h1 {
 }
 .migration button {
   margin-left: auto;
+}
+.metricContents {
+  grid-column: span 2;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px 8px;
+  line-height: 1.5;
+  font-size: 11px;
+  font-weight: 500;
+  color: #526357;
+}
+.metricContents b {
+  font-weight: 750;
+  color: #253b2a;
+}
+.metricContents svg {
+  margin-left: auto;
+}
+.stockItems {
+  margin-top: 18px;
+}
+.stockItems > div:last-child {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0 22px;
+  padding: 0 18px 16px;
+}
+.stockItems > div:last-child > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  border-top: 1px solid #e1e6dc;
+  padding: 9px 0;
+  font-size: 12px;
+}
+.stockItems b {
+  white-space: nowrap;
+}
+.stockItems p {
+  font-size: 12px;
+  color: #647268;
+}
+.wcDrawing > div {
+  width: auto;
+  min-height: 0;
 }

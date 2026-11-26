@@ -1,4 +1,5 @@
 import { products } from "./catalog.js";
+export { summarizeContents } from "./content-info.js";
 
 const lookup = new Map(products.map((product) => [product.id, product]));
 export const byId = (id) => lookup.get(id);
@@ -132,7 +133,16 @@ export function move(plan, fromRow, index, toRow, toIndex = null) {
   return added;
 }
 
-export function resize(plan, config) {
+// With only the tier count changed, keep the existing clear height of each tier.
+export function resize(plan, config, tierHeight) {
+  if (
+    tierHeight !== undefined ||
+    (config.levels !== plan.config.levels &&
+      config.height === plan.config.height)
+  ) {
+    const clearHeight = tierHeight ?? plan.config.height / plan.config.levels;
+    config = { ...config, height: Math.round(clearHeight * config.levels) };
+  }
   if (!validConfig(config))
     return { plan, error: "寸法と段数を入力範囲内の整数にしてください。" };
   const same = {
@@ -161,6 +171,76 @@ export function resize(plan, config) {
     vacancies[best] -= p.w;
   }
   return { plan: next };
+}
+
+export function applyRecommendations(plan, lines) {
+  if (!Array.isArray(lines) || !lines.length)
+    return { plan, error: "配置する推奨製品がありません。" };
+  const counts = new Map();
+  for (const entry of lines) {
+    const id = entry?.id ?? entry?.product?.id;
+    const count = entry?.count ?? entry?.quantity ?? entry?.qty;
+    if (!byId(id) || !Number.isSafeInteger(count) || count < 0)
+      return { plan, error: "製品と推奨数量を確認してください。" };
+    if (count > 0) counts.set(id, (counts.get(id) || 0) + count);
+  }
+  if (!counts.size)
+    return { plan, error: "数量が1以上の製品を選んでください。" };
+  const { width, height, levels, depth } = plan.config;
+  const tierHeight = height / levels;
+  const maxLevels = Math.min(
+    limits.levels[1],
+    Math.floor(limits.height[1] / tierHeight),
+  );
+  const ordered = [...counts].sort(([a], [b]) => byId(b).w - byId(a).w);
+  const rows = Array.from({ length: levels }, () => []);
+  const vacancies = rows.map(() => width);
+  for (const [id, quantity] of ordered) {
+    const product = byId(id);
+    if (product.w > width || product.h > tierHeight || product.d > depth) {
+      return {
+        plan,
+        error:
+          product.name +
+          "を収納するには、内幅 " +
+          product.w +
+          " mm・1段の内高 " +
+          product.h +
+          " mm・奥行 " +
+          product.d +
+          " mm 以上が必要です。棚設定で寸法を広げてください。",
+      };
+    }
+    let remaining = quantity;
+    for (let row = 0; remaining > 0; row++) {
+      if (row === maxLevels)
+        return {
+          plan,
+          error:
+            "全数を配置するには、現在の内幅で" +
+            maxLevels +
+            "段を超えます。棚設定で内幅を広げるか、試算の対象人数を減らしてください。",
+        };
+      if (row === rows.length) {
+        rows.push([]);
+        vacancies.push(width);
+      }
+      const amount = Math.min(
+        remaining,
+        Math.floor(vacancies[row] / product.w),
+      );
+      if (!amount) continue;
+      rows[row].push(...Array(amount).fill(id));
+      vacancies[row] -= amount * product.w;
+      remaining -= amount;
+    }
+  }
+  const config = {
+    ...plan.config,
+    levels: rows.length,
+    height: Math.ceil(tierHeight * rows.length),
+  };
+  return { plan: { config, rows } };
 }
 
 export function initialPlan() {

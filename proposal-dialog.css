@@ -1,0 +1,51 @@
+.prop-dialog .prop-formats {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.prop-formats legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.prop-formats label {
+  position: relative;
+  cursor: pointer;
+}
+.prop-formats input {
+  position: absolute;
+  right: 12px;
+  top: 13px;
+  accent-color: #315344;
+}
+.prop-formats label > span {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  align-items: center;
+  gap: 4px 6px;
+  padding: 12px 25px 12px 10px;
+  border: 1px solid #c6d1c7;
+  border-radius: 8px;
+}
+.prop-formats small {
+  grid-column: 2;
+}
+.prop-formats input:checked + span {
+  background: #f0f6ef;
+  border-color: #64816a;
+}
+.prop-formats input:focus-visible + span {
+  outline: 2px solid #a17133;
+  outline-offset: 2px;
+}
+.prop-formats strong {
+  font-size: 13px;
+}
+.prop-dialog button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}

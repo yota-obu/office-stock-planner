@@ -25,7 +25,9 @@ import {
   remove,
   resize,
   summarize,
+  summarizeContents,
 } from "./engine.js";
+import { itemDescription } from "./content-info.js";
 import "./dialogs.css";
 
 const format = (value) => value.toLocaleString("ja-JP");
@@ -58,6 +60,7 @@ function NumberField({ value, onChange, label, unit, min = 1, max = 9999 }) {
       <span className="kd-number">
         <input
           type="number"
+          aria-label={label}
           required
           min={min}
           max={max}
@@ -85,12 +88,15 @@ function Destination({ plan, value, onChange, auto = true }) {
   );
 }
 function Settings({ plan, accept }) {
-  const [draft, setDraft] = useState(plan.config);
+  const [draft, setDraft] = useState({
+    ...plan.config,
+    tierHeight: Math.ceil(plan.config.height / plan.config.levels),
+  });
   const [clear, setClear] = useState(false);
   const keys = [
     ["width", "棚の内幅", "mm"],
     ["depth", "棚の内奥行", "mm"],
-    ["height", "収納部の合計内高", "mm"],
+    ["tierHeight", "1段あたりの内高", "mm"],
     ["levels", "段数", "段"],
   ];
   return (
@@ -101,11 +107,12 @@ function Settings({ plan, accept }) {
         const source = clear
           ? { ...plan, rows: plan.rows.map(() => []) }
           : plan;
-        accept(resize(source, draft), "棚の設定を更新しました");
+        const { tierHeight, ...config } = draft;
+        accept(resize(source, config, tierHeight), "棚の設定を更新しました");
       }}
     >
       <p>
-        棚板の厚みを除いた内寸を入力してください。各段の高さは均等に配分します。
+        棚板の厚みを除いた内寸を入力してください。段を増やすと、1段あたりの内高を保ったまま棚全体が高くなります。
       </p>
       <div className="kd-grid">
         {keys.map(([key, label, unit]) => (
@@ -113,8 +120,12 @@ function Settings({ plan, accept }) {
             key={key}
             label={label}
             unit={unit}
-            min={limits[key][0]}
-            max={limits[key][1]}
+            min={key === "tierHeight" ? 1 : limits[key][0]}
+            max={
+              key === "tierHeight"
+                ? Math.floor(limits.height[1] / (draft.levels || 1))
+                : limits[key][1]
+            }
             value={draft[key]}
             onChange={(v) =>
               setDraft({ ...draft, [key]: v === "" ? "" : Number(v) })
@@ -125,11 +136,9 @@ function Settings({ plan, accept }) {
       <div className="kd-callout">
         <Ruler size={20} />
         <span>
-          1段あたりの内高{" "}
+          棚全体の有効内高{" "}
           <strong>
-            {draft.levels > 0
-              ? format(Math.round((draft.height / draft.levels) * 10) / 10)
-              : "—"}{" "}
+            {draft.levels > 0 ? format(draft.tierHeight * draft.levels) : "—"}{" "}
             mm
           </strong>
         </span>
@@ -195,7 +204,10 @@ function Product({ dialog, plan, accept }) {
         <div>
           {p.items.map(([name, n]) => (
             <div className="kd-line" key={name}>
-              <span>{name}</span>
+              <span>
+                {name}
+                <small>{itemDescription(name)}</small>
+              </span>
               <b>
                 {format(n)} {p.units?.[name] || "点"}
               </b>
@@ -401,10 +413,17 @@ function Report({ plan, mode }) {
         </button>
       </div>
     );
-  const list = summary.items.filter((item) => item.name.includes(query.trim()));
-  const units = new Map(
-    summary.lines.flatMap(({ product: p }) => Object.entries(p.units || {})),
-  );
+  const term = query.trim().toLowerCase();
+  const groups = summarizeContents(plan)
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) =>
+        [group.label, item.name, item.description].some((value) =>
+          value.toLowerCase().includes(term),
+        ),
+      ),
+    }))
+    .filter((group) => group.items.length);
   return (
     <div className="kd-stack">
       <div className="kd-total">
@@ -413,7 +432,8 @@ function Report({ plan, mode }) {
           {format(summary.itemCount)} <small>点</small>
         </strong>
         <small>
-          {summary.items.length} 種類 ・ {format(summary.count)} セット分
+          {summary.items.length} 種類 ・ {format(summary.count)}{" "}
+          セット分（同梱単位）
         </small>
       </div>
       <label className="kd-search">
@@ -422,20 +442,42 @@ function Report({ plan, mode }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           aria-label="内容品を検索"
-          placeholder="内容品名で検索"
+          placeholder="用途・内容品名で検索"
         />
       </label>
-      <div>
-        {list.map(({ name, count }) => (
-          <div className="kd-line" key={name}>
-            <span>{name}</span>
+      {groups.map((group) => (
+        <details
+          className="kd-content-group"
+          key={group.key + ":" + term}
+          open={term ? true : undefined}
+        >
+          <summary>
+            <strong>{group.label}</strong>
             <b>
-              {format(count)} {units.get(name) || "点"}
+              {format(group.count)} {group.unit}
             </b>
-          </div>
-        ))}
-        {!list.length && <p>該当する内容品はありません。</p>}
-      </div>
+          </summary>
+          <p>{group.description}</p>
+          {group.items.map((item) => (
+            <div className="kd-line" key={item.name}>
+              <span>
+                {item.name}
+                <small>{item.description}</small>
+              </span>
+              <b>
+                {format(item.count)} {item.unit}
+              </b>
+            </div>
+          ))}
+        </details>
+      ))}
+      {!groups.length && (
+        <p>
+          {summary.count
+            ? "該当する内容品はありません。"
+            : "棚に製品を追加すると、用途ごとの備蓄量を確認できます。"}
+        </p>
+      )}
     </div>
   );
 }

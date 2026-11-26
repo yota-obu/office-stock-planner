@@ -3,6 +3,8 @@ import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import {
   FileText,
+  ClipboardList,
+  Ruler,
   Trash2,
   Undo2,
   LibraryBig,
@@ -33,12 +35,50 @@ import {
   Info,
 } from "lucide-react";
 import { products } from "./catalog.js";
-import { initialPlan, add, summarize, isValidPlan } from "./engine.js";
+import {
+  initialPlan,
+  add,
+  summarize,
+  isValidPlan,
+  applyRecommendations,
+  summarizeContents,
+} from "./engine.js";
+import WidthCalculator from "./WidthCalculator.jsx";
+import Diagnosis from "./Diagnosis.jsx";
+import ProposalDialog from "./ProposalDialog.jsx";
 import Dialogs from "./Dialogs.jsx";
 import ProductArt from "./ProductArt.jsx";
 import "./style.css";
 
 const key = "kokobo-shelf-v1";
+const titles = {
+  diagnosis: "備蓄プラン診断",
+  shelf: "棚シミュレーター",
+  width: "必要幅を計算",
+  catalog: "製品カタログ",
+};
+const descriptions = {
+  diagnosis:
+    "人数・滞在日数・備えたいものから、オフィスに合う防災セットを選びましょう。",
+  shelf: "ファイル棚の内寸に合わせて、防災セットの配置と費用を確認できます。",
+  width: "製品と数量を選ぶと、横一列に並べたときの棚幅がわかります。",
+  catalog: "製品の仕様やセット内容を確認して、棚に追加できます。",
+};
+const currentPage = () =>
+  Object.hasOwn(titles, location.hash.slice(1))
+    ? location.hash.slice(1)
+    : "diagnosis";
+function loadAssumptions() {
+  const defaults = { people: 10, days: 3, recipient: "" };
+  try {
+    return {
+      ...defaults,
+      ...JSON.parse(localStorage.getItem("kokobo-assumptions-v1")),
+    };
+  } catch {
+    return defaults;
+  }
+}
 const lookup = Object.fromEntries(products.map((p) => [p.id, p]));
 const money = (n) => n.toLocaleString("ja-JP");
 function readPlan() {
@@ -78,7 +118,7 @@ function App() {
   const [notice, setNotice] = useState(loaded.notice);
   const [plan, setPlan] = useState(loaded.plan),
     [dialog, D] = useState(null),
-    [page, P] = useState("shelf"),
+    [page, P] = useState(currentPage),
     [query, Q] = useState(""),
     [cat, C] = useState("すべて"),
     [zoom, Z] = useState(1),
@@ -92,7 +132,7 @@ function App() {
     ghost = useRef(null);
   const [quantities, setQuantities] = useState({}),
     [dragging, setDragging] = useState(null),
-    [making, setMaking] = useState(false);
+    [assumptions, setAssumptions] = useState(loadAssumptions);
   function changePlan(next) {
     history.current = [...history.current.slice(-49), plan];
     setPlan(next);
@@ -114,17 +154,40 @@ function App() {
         n === "" ? "" : Math.max(1, Math.min(9999, Math.trunc(Number(n) || 1))),
     }));
   }
-  async function proposal() {
-    setMaking(true);
+  function updateAssumptions(patch) {
+    setAssumptions((current) => ({
+      ...current,
+      ...(typeof patch === "function" ? patch(current) : patch),
+    }));
+  }
+  useEffect(() => {
     try {
-      const { createProposal } = await import("./proposal.js");
-      await createProposal(plan);
-      notify("A4提案書を作成しました");
-    } catch {
-      notify("提案書を作成できませんでした。もう一度お試しください。");
-    } finally {
-      setMaking(false);
+      localStorage.setItem(
+        "kokobo-assumptions-v1",
+        JSON.stringify(assumptions),
+      );
+    } catch {}
+  }, [assumptions]);
+  useEffect(() => {
+    function onHash() {
+      P(currentPage());
+      D(null);
+      F(false);
+      N(false);
     }
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  function applyDiagnosis(lines) {
+    const result = applyRecommendations(plan, lines);
+    if (result.error) {
+      notify(result.error);
+      return result;
+    }
+    changePlan(result.plan);
+    navigate("shelf");
+    notify("おすすめの製品を棚に配置しました");
+    return result;
   }
   function notify(v) {
     T(v);
@@ -150,6 +213,10 @@ function App() {
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
   }, []);
+  const contents = summarizeContents(plan);
+  const highlights = ["toilet", "meals", "water", "snacks", "blankets"]
+    .map((key) => contents.find((g) => g.key === key))
+    .filter(Boolean);
   const stats = summarize(plan),
     cfg = plan.config,
     visible = products.filter(
@@ -295,12 +362,17 @@ function App() {
   }
   function navigate(id) {
     N(false);
-    if (id === "shelf" || id === "catalog") {
+    if (Object.hasOwn(titles, id)) {
+      D(null);
       P(id);
+      location.hash = id;
+      window.scrollTo(0, 0);
     } else D({ type: id });
   }
   const links = [
+    ["diagnosis", ClipboardList, "備蓄プラン診断"],
     ["shelf", PanelTop, "棚シミュレーター"],
+    ["width", Ruler, "必要幅を計算"],
     ["catalog", LibraryBig, "製品カタログ"],
     ["employees", UsersRound, "社員数から試算"],
     ["estimate", ReceiptText, "見積もり・集計"],
@@ -497,7 +569,7 @@ function App() {
           <LayoutDashboard size={15} />
           <span>ワークスペース</span>
           <ChevronRight size={13} />
-          <b>{page === "shelf" ? "棚シミュレーター" : "製品カタログ"}</b>
+          <b>{titles[page]}</b>
           <div className="save">
             <i />
             {saved ? "端末に自動保存" : "端末への保存に失敗"}
@@ -518,19 +590,28 @@ function App() {
           )}
           <div className="title">
             <div>
-              <h1>{page === "shelf" ? "棚シミュレーター" : "製品カタログ"}</h1>
-              <p>
-                {page === "shelf"
-                  ? "防災セットを棚に配置して、備蓄スペースと費用を確認しましょう。"
-                  : "製品の仕様やセット内容を確認して、棚に追加できます。"}
-              </p>
+              <h1>{titles[page]}</h1>
+              <p>{descriptions[page]}</p>
             </div>
-            <button className="primary" onClick={() => D({ type: "estimate" })}>
-              <ReceiptText size={17} />
-              見積もりを確認
-            </button>
+            {page === "shelf" && (
+              <button
+                className="primary"
+                onClick={() => D({ type: "estimate" })}
+              >
+                <ReceiptText size={17} />
+                見積もりを確認
+              </button>
+            )}
           </div>
-          {page === "catalog" ? (
+          {page === "diagnosis" ? (
+            <Diagnosis
+              assumptions={assumptions}
+              onAssumptions={updateAssumptions}
+              onApply={applyDiagnosis}
+            />
+          ) : page === "width" ? (
+            <WidthCalculator plan={plan} onShelf={() => navigate("shelf")} />
+          ) : page === "catalog" ? (
             catalog
           ) : (
             <>
@@ -562,9 +643,22 @@ function App() {
                   ],
                   [
                     Boxes,
-                    "内容物合計",
-                    stats.items.reduce((a, b) => a + b.count, 0),
-                    "点",
+                    "内容物の内訳",
+                    [
+                      ...highlights,
+                      ...contents.filter((g) => !highlights.includes(g)),
+                    ]
+                      .slice(0, 2)
+                      .map((g) => (
+                        <span key={g.key}>
+                          {g.label}{" "}
+                          <b>
+                            {money(g.count)}
+                            {g.unit}
+                          </b>
+                        </span>
+                      )),
+                    "",
                     "purple",
                     "items",
                   ],
@@ -574,9 +668,16 @@ function App() {
                       <I size={18} />
                     </span>
                     <span className="metriclabel">{label}</span>
-                    <strong>
-                      {value} <small>{unit}</small>
-                    </strong>
+                    {target === "items" ? (
+                      <div className="metricContents">
+                        {contents.length ? value : "未配置"}
+                        <ChevronRight size={13} />
+                      </div>
+                    ) : (
+                      <strong>
+                        {value} <small>{unit}</small>
+                      </strong>
+                    )}
                   </button>
                 ))}
               </div>
@@ -611,11 +712,10 @@ function App() {
                     </button>
                     <button
                       className="proposal"
-                      onClick={proposal}
-                      disabled={making}
+                      onClick={() => D({ type: "proposal" })}
                     >
                       <FileText size={14} />
-                      {making ? "作成中…" : "提案書を作成"}
+                      提案書を作成
                     </button>
                   </div>
                   <div className="canvas">
@@ -635,6 +735,8 @@ function App() {
                         className="diagram"
                         style={{
                           "--ratio": cfg.width / cfg.height,
+                          "--fit-ratio":
+                            cfg.width / ((2 * cfg.height) / cfg.levels),
                           "--zoom": zoom,
                         }}
                       >
@@ -769,11 +871,49 @@ function App() {
                 </section>
                 {catalog}
               </div>
+              <section className="panel stockItems">
+                <div className="panelheading">
+                  <h2>
+                    <Boxes />
+                    アイテム別の合計数量
+                  </h2>
+                  <button
+                    className="smallbutton"
+                    onClick={() => D({ type: "items" })}
+                  >
+                    用途別に確認
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+                <div>
+                  {contents
+                    .flatMap((group) => group.items)
+                    .map((item) => (
+                      <span key={item.name}>
+                        {item.name}{" "}
+                        <b>
+                          {money(item.count)} {item.unit}
+                        </b>
+                      </span>
+                    ))}
+                  {!contents.length && (
+                    <p>製品を配置すると、ここに内容物と数量が表示されます。</p>
+                  )}
+                </div>
+              </section>
             </>
           )}
         </div>
       </main>
-      {dialog?.type === "clear" ? (
+      {dialog?.type === "proposal" ? (
+        <ProposalDialog
+          plan={plan}
+          assumptions={assumptions}
+          onAssumptions={updateAssumptions}
+          onClose={() => D(null)}
+          onNotify={notify}
+        />
+      ) : dialog?.type === "clear" ? (
         <div className="helpback">
           <section role="alertdialog" aria-modal="true" className="help">
             <h2>棚を空にしますか？</h2>
