@@ -28,14 +28,12 @@ import {
   Menu,
   X,
   Layers3,
-  Info,
 } from "lucide-react";
 import { products } from "./catalog.js";
 import {
   initialPlan,
   add,
   summarize,
-  isValidPlan,
   applyRecommendations,
   summarizeContents,
 } from "./engine.js";
@@ -46,7 +44,6 @@ import Dialogs from "./Dialogs.jsx";
 import ProductArt from "./ProductArt.jsx";
 import "./style.css";
 
-const key = "stock-shelf-v1";
 const titles = {
   diagnosis: "備蓄プラン診断",
   shelf: "棚シミュレーター",
@@ -64,67 +61,8 @@ const currentPage = () =>
   Object.hasOwn(titles, location.hash.slice(1))
     ? location.hash.slice(1)
     : "diagnosis";
-function loadAssumptions() {
-  const defaults = { people: 10, days: 3, recipient: "" };
-  try {
-    return {
-      ...defaults,
-      ...JSON.parse(
-        localStorage.getItem("stock-assumptions-v1") ??
-          localStorage.getItem("kokobo-assumptions-v1"),
-      ),
-    };
-  } catch {
-    return defaults;
-  }
-}
 const lookup = Object.fromEntries(products.map((p) => [p.id, p]));
 const money = (n) => n.toLocaleString("ja-JP");
-function readPlan() {
-  try {
-    const p = JSON.parse(
-      localStorage.getItem(key) ?? localStorage.getItem("kokobo-shelf-v1"),
-    );
-    if (
-      p?.config?.levels > 5 &&
-      p.config.levels <= 10 &&
-      Array.isArray(p.rows)
-    ) {
-      const levels = p.config.levels;
-      const rows = [];
-      for (let i = 0; i < p.rows.length; i += levels) {
-        rows.push(...p.rows.slice(i, i + levels));
-        while (rows.length % 5) rows.push([]);
-      }
-      const migrated = {
-        config: {
-          ...p.config,
-          levels: 5,
-          height: Math.max(50, Math.ceil((p.config.height * 5) / levels)),
-        },
-        rows,
-      };
-      if (isValidPlan(migrated))
-        return {
-          plan: migrated,
-          notice: "保存済みの6段以上の棚を、5段ずつ横並びに分けました。",
-        };
-    }
-    if (p && isValidPlan(p)) return { plan: p };
-    if (p?.rows?.flat().includes("SYS-200") && p.config.depth < 222) {
-      const repaired = { ...p, config: { ...p.config, depth: 222 } };
-      if (isValidPlan(repaired))
-        return {
-          plan: repaired,
-          notice:
-            "車載セットの背表紙を正面に向けたため、保存済みの棚の奥行を " +
-            p.config.depth +
-            " mm から 222 mm に調整しました。実際の棚に合わせてご確認ください。",
-        };
-    }
-  } catch {}
-  return { plan: initialPlan() };
-}
 function Logo() {
   return (
     <div className="brand">
@@ -140,24 +78,15 @@ function Logo() {
   );
 }
 function App() {
-  const [compact, setCompact] = useState(() => {
-    try {
-      const saved = localStorage.getItem("stock-sidebar-compact");
-      if (saved !== null) return saved === "1";
-    } catch {}
-    return window.matchMedia("(max-width:940px)").matches;
-  });
+  const [compact, setCompact] = useState(
+    () => window.matchMedia("(max-width:940px)").matches,
+  );
   function toggleSidebar() {
     const next = !compact;
     setCompact(next);
     if (window.matchMedia("(max-width:720px)").matches) N(!next);
-    try {
-      localStorage.setItem("stock-sidebar-compact", next ? "1" : "0");
-    } catch {}
   }
-  const [loaded] = useState(readPlan);
-  const [notice, setNotice] = useState(loaded.notice);
-  const [plan, setPlan] = useState(loaded.plan),
+  const [plan, setPlan] = useState(initialPlan),
     [dialog, D] = useState(null),
     [page, P] = useState(currentPage),
     [query, Q] = useState(""),
@@ -166,14 +95,17 @@ function App() {
     [hover, H] = useState(null),
     [toast, T] = useState(""),
     [nav, N] = useState(false),
-    [full, F] = useState(false),
-    [saved, S] = useState(true);
+    [full, F] = useState(false);
   const timer = useRef(),
     history = useRef([]),
     ghost = useRef(null);
   const [quantities, setQuantities] = useState({}),
     [dragging, setDragging] = useState(null),
-    [assumptions, setAssumptions] = useState(loadAssumptions);
+    [assumptions, setAssumptions] = useState({
+      people: 10,
+      days: 3,
+      recipient: "",
+    });
   const [selection, setSelection] = useState([]);
   function changePlan(next) {
     setSelection([]);
@@ -204,11 +136,7 @@ function App() {
       ...(typeof patch === "function" ? patch(current) : patch),
     }));
   }
-  useEffect(() => {
-    try {
-      localStorage.setItem("stock-assumptions-v1", JSON.stringify(assumptions));
-    } catch {}
-  }, [assumptions]);
+
   useEffect(() => {
     function onHash() {
       P(currentPage());
@@ -235,14 +163,7 @@ function App() {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => T(""), 3200);
   }
-  useEffect(() => {
-    try {
-      localStorage.setItem(key, JSON.stringify(plan));
-      S(true);
-    } catch {
-      S(false);
-    }
-  }, [plan]);
+
   useEffect(() => {
     function esc(e) {
       if (e.key === "Escape") {
@@ -706,23 +627,6 @@ function App() {
       </aside>
       <main>
         <div className="body">
-          {notice && (
-            <div className="migration" role="status">
-              <Info size={16} />
-              <span>{notice}</span>
-              <button
-                aria-label="お知らせを閉じる"
-                onClick={() => setNotice("")}
-              >
-                <X size={16} />
-              </button>
-            </div>
-          )}
-          {!saved && (
-            <p className="migration" role="status">
-              端末への保存に失敗しました。
-            </p>
-          )}
           <div className="title">
             <button
               className="menubtn"
