@@ -1,6 +1,6 @@
 import WidthRun from "./WidthRun.jsx";
 import React, { useState } from "react";
-import { LibraryBig, Ruler } from "lucide-react";
+import { LibraryBig, Ruler, Trash2 } from "lucide-react";
 import ProductArt from "./ProductArt.jsx";
 import { products } from "./catalog.js";
 import "./width.css";
@@ -50,8 +50,17 @@ export default function WidthCalculator() {
           <LibraryBig size={19} />
           製品と数量
         </h2>
-        <label>棚の内幅（mm）
-          <input className="wcWidth" type="number" step="any" min="0" inputMode="decimal" value={shelfWidth} onChange={(event) => setShelfWidth(event.target.value)} />
+        <label>
+          棚の内幅（mm）
+          <input
+            className="wcWidth"
+            type="number"
+            step="any"
+            min="0"
+            inputMode="decimal"
+            value={shelfWidth}
+            onChange={(event) => setShelfWidth(event.target.value)}
+          />
         </label>
         {lines.map(({ id, count }, i) => {
           const { p, qty } = entries[i];
@@ -59,7 +68,10 @@ export default function WidthCalculator() {
           const setCount = (count) => update(i, { count });
           return (
             <section className="wcLine" key={i}>
-              <label>
+              <div className="wcThumb" aria-hidden="true">
+                <ProductArt product={p} />
+              </div>
+              <label className="wcProduct">
                 製品
                 <select value={id} onChange={(e) => setId(e.target.value)}>
                   {products.map((product) => (
@@ -106,26 +118,14 @@ export default function WidthCalculator() {
                   </button>
                 </div>
               </label>
-              <div className="wcSpec">
-                <div>
-                  <ProductArt product={p} />
-                </div>
-                <p>
-                  <b>{p.id}</b>
-                  <br />
-                  {p.name}
-                  <br />
-                  <small>
-                    背幅 {p.w} × 高さ {p.h} × 奥行 {p.d} mm
-                  </small>
-                </p>
-              </div>
+              <small className="wcBackWidth">背幅 {p.w} mm</small>
               {lines.length > 1 && (
                 <button
-                  className="smallbutton"
+                  className="smallbutton wcRemove"
+                  aria-label={id + " を削除"}
                   onClick={() => setLines(lines.filter((_, j) => i !== j))}
                 >
-                  {id} を削除
+                  <Trash2 size={16} />
                 </button>
               )}
             </section>
@@ -171,8 +171,8 @@ export default function WidthCalculator() {
                 </>
               ) : fits ? (
                 <>
-                  内幅 {format(width)} mm では、1段に{" "}
-                  <b>{format(perRow)} 個</b>収納できます。{format(qty)} 個には{" "}
+                  内幅 {format(width)} mm では、1段に <b>{format(perRow)} 個</b>
+                  収納できます。{format(qty)} 個には{" "}
                   <b>{format(Math.ceil(qty / perRow))} 段</b>必要です。
                 </>
               ) : (

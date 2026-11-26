@@ -164,3 +164,100 @@
   color: #26392a;
   font-size: 16px;
 }
+
+.widthCalc {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: none;
+}
+.widthCalc > .wcForm {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 18px clamp(14px, 2vw, 26px);
+}
+.wcForm h2 {
+  margin: 0;
+}
+.wcForm > label {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  gap: 8px;
+  font-size: 12px;
+}
+.wcWidth {
+  width: 7em;
+}
+.wcLine {
+  grid-column: 1/-1;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto 88px 42px;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #dde4db;
+  padding-top: 10px;
+}
+.wcLine + .wcLine {
+  margin: 0;
+  padding-top: 10px;
+}
+.wcLine > label {
+  margin: 0;
+  gap: 3px;
+  font-size: 12px;
+}
+.wcProduct select {
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+.wcThumb {
+  width: 32px;
+  height: 46px;
+}
+.wcThumb svg {
+  width: 100%;
+  height: 100%;
+}
+.wcBackWidth {
+  color: #435b49;
+  font-size: 12px;
+}
+.wcRemove {
+  justify-content: center;
+  min-height: 42px;
+}
+.wcAdd {
+  justify-self: start;
+  grid-column: 1/-1;
+  margin: 0;
+}
+@media (max-width: 650px) {
+  .widthCalc > .wcForm {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .wcForm > label {
+    justify-self: start;
+  }
+  .wcLine {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 6px 8px;
+  }
+  .wcThumb {
+    display: none;
+  }
+  .wcProduct {
+    grid-column: 1/-1;
+  }
+  .wcQty button {
+    width: 36px;
+    height: 42px;
+  }
+  .wcQty input {
+    width: 46px;
+  }
+  .wcBackWidth {
+    font-size: 11px;
+  }
+}
