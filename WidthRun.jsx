@@ -2,20 +2,10 @@ import React, { useLayoutEffect, useRef, useState } from "react";
 import ProductArt from "./ProductArt.jsx";
 import "./width-run.css";
 
-import WidthComparison, { references } from "./WidthComparison.jsx";
+const scale = 0.34;
 const format = (value) => value.toLocaleString("ja-JP");
 
 export default function WidthRun({ entries }) {
-  const total = entries.reduce((n, { p, qty }) => n + p.w * qty, 0);
-  const [choice, setChoice] = useState("auto");
-  const closest = references.reduce((a, b) =>
-    Math.abs(Math.log(total / a.width)) <= Math.abs(Math.log(total / b.width))
-      ? a
-      : b,
-  );
-  const reference =
-    choice === "auto" ? closest : references.find((r) => r.kind === choice);
-  const scale = reference ? Math.min(0.34, 180 / reference.height) : 0.34;
   const viewport = useRef(null);
   const [view, setView] = useState({ width: 0, left: 0 });
   useLayoutEffect(() => {
@@ -41,7 +31,6 @@ export default function WidthRun({ entries }) {
     return group;
   });
   // Keep the scrollbar within browser layout limits, even for a run of millions of sets.
-  length = Math.max(length, (reference?.width ?? 0) * scale);
   const track = Math.min(length, 4000000);
   const left = Math.max(
     0,
@@ -70,24 +59,6 @@ export default function WidthRun({ entries }) {
   }
   return (
     <div className="widthRun">
-      <label className="comparisonChoice">
-        同じ縮尺で比較
-        <select
-          value={choice}
-          onChange={(event) => {
-            setChoice(event.target.value);
-            viewport.current.scrollLeft = 0;
-          }}
-        >
-          <option value="auto">自動（{closest.name}）</option>
-          <option value="none">比較なし</option>
-          {references.map((r) => (
-            <option key={r.kind} value={r.kind}>
-              {r.name}
-            </option>
-          ))}
-        </select>
-      </label>
       <div
         className="widthRunViewport"
         ref={viewport}
@@ -134,18 +105,6 @@ export default function WidthRun({ entries }) {
                 </div>
               ))}
             </div>
-            {reference && (
-              <>
-                <p className="comparisonCaption">
-                  {reference.name} · 基準幅 {format(reference.width)} mm
-                </p>
-                <WidthComparison
-                  reference={reference}
-                  scale={scale}
-                  left={left}
-                />
-              </>
-            )}
           </div>
         </div>
       </div>

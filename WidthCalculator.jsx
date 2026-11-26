@@ -149,7 +149,7 @@ export default function WidthCalculator() {
             </p>
             <WidthRun entries={entries} />
             <section className="wcCompare">
-              <h3>棚幅と比較</h3>
+              <h3>必要な棚の段数</h3>
               <label>
                 棚の内幅（mm）
                 <input
