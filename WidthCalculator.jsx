@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import { ArrowRight, LibraryBig, Ruler } from "lucide-react";
+import { LibraryBig, Ruler } from "lucide-react";
 import ProductArt from "./ProductArt.jsx";
 import { products } from "./catalog.js";
 import "./width.css";
 
 const format = (n) => n.toLocaleString("ja-JP");
 
-export default function WidthCalculator({ plan, onShelf }) {
+export default function WidthCalculator() {
+  const [shelfWidth, setShelfWidth] = useState("1050");
   const [lines, setLines] = useState([{ id: "BCS-300", count: "20" }]);
   const entries = lines.map((line) => ({
     p: products.find((p) => p.id === line.id),
@@ -17,9 +18,10 @@ export default function WidthCalculator({ plan, onShelf }) {
     ({ qty }) => Number.isInteger(qty) && qty >= 1 && qty <= 99999,
   );
   const total = entries.reduce((n, { p, qty }) => n + p.w * qty, 0);
-  const { width, height, levels } = plan.config;
+  const width = Number(shelfWidth);
+  const validWidth = Number.isFinite(width) && width > 0;
   const perRow = Math.floor(width / p.w);
-  const fits = entries.every(({ p }) => p.h <= height / levels && p.w <= width);
+  const fits = validWidth && entries.every(({ p }) => p.w <= width);
   const remainingProduct = products.find(
     (p) => !lines.some((l) => l.id === p.id),
   );
@@ -46,6 +48,9 @@ export default function WidthCalculator({ plan, onShelf }) {
           <LibraryBig size={19} />
           製品と数量
         </h2>
+        <label>棚の内幅（mm）
+          <input className="wcWidth" type="number" step="any" min="0" inputMode="decimal" value={shelfWidth} onChange={(event) => setShelfWidth(event.target.value)} />
+        </label>
         {lines.map(({ id, count }, i) => {
           const { p, qty } = entries[i];
           const setId = (id) => update(i, { id });
@@ -177,26 +182,23 @@ export default function WidthCalculator({ plan, onShelf }) {
               )}
             </div>
             <p className="wcShelfNote">
-              {fits && lines.length > 1 ? (
+              {!validWidth ? (
+                "棚の内幅に0より大きい数値を入力すると、必要な段数が表示されます。"
+              ) : fits && lines.length > 1 ? (
                 <>
                   空の棚（内幅 {format(width)} mm）に入力順で詰めると{" "}
-                  <b>{format(rows)} 段</b>を使用します。現在は{levels}段の棚が
-                  {plan.rows.length / levels}台あります。
+                  <b>{format(rows)} 段</b>を使用します。
                 </>
               ) : fits ? (
                 <>
-                  今の棚（内幅 {format(width)} mm）には、1段に{" "}
+                  内幅 {format(width)} mm では、1段に{" "}
                   <b>{format(perRow)} 個</b>収納できます。{format(qty)} 個には{" "}
                   <b>{format(Math.ceil(qty / perRow))} 段</b>必要です。
                 </>
               ) : (
-                "この製品は現在の棚の内寸に収まりません。棚の設定を確認してください。"
+                "入力した棚幅を超える製品があります。"
               )}
             </p>
-            <button className="smallbutton" onClick={onShelf}>
-              棚の配置を確認
-              <ArrowRight size={14} />
-            </button>
           </>
         ) : (
           <p className="wcInvalid">数量は1〜99,999の整数で入力してください。</p>

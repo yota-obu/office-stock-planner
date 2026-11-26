@@ -660,7 +660,7 @@ function App() {
               onApply={applyDiagnosis}
             />
           ) : page === "width" ? (
-            <WidthCalculator plan={plan} onShelf={() => navigate("shelf")} />
+            <WidthCalculator />
           ) : page === "catalog" ? (
             catalog
           ) : (
