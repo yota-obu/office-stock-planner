@@ -182,8 +182,8 @@ export default function WidthCalculator({ plan, onShelf }) {
               {fits && lines.length > 1 ? (
                 <>
                   空の棚（内幅 {format(width)} mm）に入力順で詰めると{" "}
-                  <b>{format(rows)} 段</b>を使用します。現在の棚は {levels}{" "}
-                  段です。
+                  <b>{format(rows)} 段</b>を使用します。現在は{levels}段の棚が
+                  {plan.rows.length / levels}台あります。
                 </>
               ) : fits ? (
                 <>

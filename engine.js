@@ -33,9 +33,10 @@ const compatible = (product, config) =>
   product.h <= config.height / config.levels && product.d <= config.depth;
 const rowExists = (plan, row) =>
   Number.isInteger(row) && row >= 0 && row < plan.rows.length;
-const blank = (config) => ({
+export const rackCount = (plan) => plan.rows.length / plan.config.levels;
+const blank = (config, racks = 1) => ({
   config: { ...config },
-  rows: Array.from({ length: config.levels }, () => []),
+  rows: Array.from({ length: config.levels * racks }, () => []),
 });
 
 export function isValidPlan(plan) {
@@ -43,7 +44,8 @@ export function isValidPlan(plan) {
     plan &&
     validConfig(plan.config) &&
     Array.isArray(plan.rows) &&
-    plan.rows.length === plan.config.levels &&
+    plan.rows.length >= plan.config.levels &&
+    Number.isInteger(rackCount(plan)) &&
     plan.rows.every(
       (row) =>
         Array.isArray(row) &&
@@ -145,13 +147,17 @@ export function resize(plan, config, tierHeight) {
   }
   if (!validConfig(config))
     return { plan, error: "寸法と段数を入力範囲内の整数にしてください。" };
-  const same = {
-    config: { ...config },
-    rows: Array.from({ length: config.levels }, (_, i) => plan.rows[i] || []),
-  };
-  if (isValidPlan(same) && !plan.rows.slice(config.levels).flat().length)
-    return { plan: same };
-  const next = blank(config);
+  const racks = rackCount(plan);
+  const same = blank(config, racks);
+  let displaced = false;
+  plan.rows.forEach((row, i) => {
+    const rack = Math.floor(i / plan.config.levels),
+      tier = i % plan.config.levels;
+    if (tier < config.levels) same.rows[rack * config.levels + tier] = row;
+    else if (row.length) displaced = true;
+  });
+  if (!displaced && isValidPlan(same)) return { plan: same };
+  const next = blank(config, racks);
   const ids = plan.rows.flat().sort((a, b) => byId(b).w - byId(a).w);
   const vacancies = next.rows.map(() => config.width);
   for (const id of ids) {
@@ -188,10 +194,6 @@ export function applyRecommendations(plan, lines) {
     return { plan, error: "数量が1以上の製品を選んでください。" };
   const { width, height, levels, depth } = plan.config;
   const tierHeight = height / levels;
-  const maxLevels = Math.min(
-    limits.levels[1],
-    Math.floor(limits.height[1] / tierHeight),
-  );
   const ordered = [...counts].sort(([a], [b]) => byId(b).w - byId(a).w);
   const rows = Array.from({ length: levels }, () => []);
   const vacancies = rows.map(() => width);
@@ -213,17 +215,11 @@ export function applyRecommendations(plan, lines) {
     }
     let remaining = quantity;
     for (let row = 0; remaining > 0; row++) {
-      if (row === maxLevels)
-        return {
-          plan,
-          error:
-            "全数を配置するには、現在の内幅で" +
-            maxLevels +
-            "段を超えます。棚設定で内幅を広げるか、試算の対象人数を減らしてください。",
-        };
       if (row === rows.length) {
-        rows.push([]);
-        vacancies.push(width);
+        for (let tier = 0; tier < levels; tier++) {
+          rows.push([]);
+          vacancies.push(width);
+        }
       }
       const amount = Math.min(
         remaining,
@@ -235,12 +231,7 @@ export function applyRecommendations(plan, lines) {
       remaining -= amount;
     }
   }
-  const config = {
-    ...plan.config,
-    levels: rows.length,
-    height: Math.ceil(tierHeight * rows.length),
-  };
-  return { plan: { config, rows } };
+  return { plan: { config: { ...plan.config }, rows } };
 }
 
 export function initialPlan() {
@@ -295,7 +286,7 @@ export function summarize(plan) {
     itemCount: items.reduce((sum, item) => sum + item.count, 0),
     usedWidth,
     fill: Math.round(
-      (100 * usedWidth) / (plan.config.width * plan.config.levels),
+      (100 * usedWidth) / (plan.config.width * plan.rows.length),
     ),
   };
 }

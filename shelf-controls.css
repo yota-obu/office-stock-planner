@@ -87,3 +87,48 @@
     );
   }
 }
+.canvaspanel .shelfscroll.fitCanvas {
+  container-type: size;
+  display: flex;
+  align-items: flex-start;
+  padding: 30px 45px 25px 30px;
+  gap: 0;
+}
+.fitCanvas .rackStrip {
+  --rack-gap: min(24px, calc(12cqw / var(--rack-count)));
+  display: flex;
+  align-items: center;
+  gap: var(--rack-gap);
+  margin: auto;
+  flex: none;
+}
+.canvaspanel .fitCanvas .diagram {
+  width: calc(
+    min(
+        (100cqw - (var(--rack-count) - 1) * var(--rack-gap) - 2px) /
+          var(--rack-count),
+        (100cqh - 2px) * var(--ratio)
+      ) *
+      var(--zoom)
+  );
+  margin: 0;
+  flex: none;
+}
+.canvaspanel .multiRack.fitCanvas {
+  padding-inline: 12px;
+}
+.canvaspanel .multiRack .rownum {
+  display: none;
+}
+.multiRack .rackLabel {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.canvasfoot > span:last-child {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.canvaspanel .multiRack .diagram:after {
+  display: none;
+}

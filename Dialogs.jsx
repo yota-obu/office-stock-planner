@@ -70,7 +70,10 @@ function Destination({ plan, value, onChange, auto = true }) {
         {auto && <option value="">空いている段に自動配置</option>}
         {plan.rows.map((_, i) => (
           <option key={i} value={i}>
-            {i + 1} 段目
+            {plan.rows.length > plan.config.levels
+              ? "棚" + (Math.floor(i / plan.config.levels) + 1) + "・"
+              : ""}
+            {(i % plan.config.levels) + 1} 段目
           </option>
         ))}
       </select>

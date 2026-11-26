@@ -206,13 +206,13 @@ h1 {
   gap: 12px;
   margin-bottom: 22px;
 }
-.metrics button,
+.metrics .metricTile,
 .panel {
   border: 1px solid #dce2d9;
   background: white;
   border-radius: 12px;
 }
-.metrics button {
+.metrics .metricTile {
   display: grid;
   align-items: center;
   grid-template-columns: 29px 1fr;
@@ -728,7 +728,7 @@ h1 {
   main {
     margin-left: 230px;
   }
-  .metrics button {
+  .metrics .metricTile {
     padding: 18px 24px;
   }
 }
@@ -761,7 +761,7 @@ h1 {
   .panelheading {
     padding: 0 13px;
   }
-  .metrics button {
+  .metrics .metricTile {
     padding: 12px;
   }
   .body {
@@ -854,7 +854,7 @@ h1 {
     gap: 7px;
     margin-bottom: 14px;
   }
-  .metrics button {
+  .metrics .metricTile {
     padding: 9px 12px;
     gap: 3px 6px;
   }
@@ -1246,5 +1246,73 @@ header,
   .wcQty button,
   .qtystep button {
     min-height: 24px;
+  }
+}
+.brand span {
+  font-family: inherit;
+  font-size: 18px;
+  letter-spacing: 0.012em;
+}
+.brand small {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.siteNotice {
+  margin: 0 clamp(17px, 2.4vw, 42px);
+  padding: 18px 0 24px;
+  border-top: 1px solid #d7dfd4;
+  color: #56645a;
+  font-size: 11px;
+  line-height: 1.8;
+}
+.siteNotice strong {
+  color: #384a3e;
+}
+.siteNotice p {
+  margin-top: 3px;
+}
+.shelfscroll.multiRack {
+  gap: 72px;
+  padding-inline: 34px 48px;
+  align-items: center;
+}
+.multiRack .diagram {
+  margin: auto 0;
+}
+.canvaspanel .multiRack .diagram {
+  width: calc(
+    min(49%, (clamp(435px, 42vw, 660px) - 155px) * var(--fit-ratio)) *
+      var(--zoom)
+  );
+}
+.rackLabel {
+  position: absolute;
+  top: calc(100% + 11px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: bold;
+  color: #40533c;
+  white-space: nowrap;
+}
+.multiRack .diagram:after {
+  content: "";
+  display: block;
+  position: absolute;
+  pointer-events: none;
+  left: 100%;
+  top: 0;
+  width: 44px;
+  height: 1px;
+}
+@media (max-width: 720px) {
+  .canvaspanel .multiRack .diagram {
+    width: calc(
+      min(73%, (clamp(350px, 90vw, 490px) - 150px) * var(--fit-ratio)) *
+        var(--zoom)
+    );
+  }
+  .siteNotice {
+    font-size: 12px;
   }
 }

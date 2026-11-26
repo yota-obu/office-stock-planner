@@ -6,7 +6,6 @@ import {
   Mountain,
   Sun,
   Car,
-  Waves,
   UsersRound,
   CalendarDays,
   Utensils,
@@ -86,12 +85,6 @@ const options = [
     note: "車両ごとに1セット",
     Icon: Toilet,
   },
-  {
-    key: "flood",
-    label: "浸水・漏水",
-    note: "吸水バッグの取扱状況",
-    Icon: Waves,
-  },
 ];
 const defaultNeeds = ["food", "water", "toilet"];
 const basicToilet = "非常用簡易トイレ";
@@ -124,16 +117,19 @@ export function calculateDiagnosis(people, days, needs, prefs = {}) {
   }
   if (needs.includes("carry"))
     add("KSS-200", Math.ceil(people / (prefs.teamSize || 10)));
-  if (needs.includes("commute")) add("KTS-200", people);
+  const commuting = needs.includes("commute")
+    ? Math.min(people, Math.max(0, prefs.commuters ?? people))
+    : 0;
+  add("KTS-200", commuting);
   if (needs.includes("heat")) add("ATS-200", people);
   if (needs.includes("ash")) add("KZB-100", people);
   if (needs.includes("vehicle")) add("SYS-200", prefs.vehicles || 1);
   if (needs.includes("vehicleToilet")) add("SYS-300", prefs.vehicles || 1);
   if (
     needs.includes("water") &&
-    !["food", "commute", "heat"].some((key) => needs.includes(key))
+    !["food", "heat"].some((key) => needs.includes(key))
   )
-    add("MNS-200", people);
+    add("MNS-200", people - commuting);
   if (needs.includes("hygiene")) {
     const withPads = Math.min(people, prefs.padUsers || 0);
     add("HGS-300", withPads);
@@ -179,7 +175,14 @@ export function calculateDiagnosis(people, days, needs, prefs = {}) {
 }
 
 export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
-  const { people = 10, days = 3, needs = defaultNeeds } = assumptions;
+  const {
+    people = 10,
+    days = 3,
+    needs: storedNeeds = defaultNeeds,
+  } = assumptions;
+  const needs = options
+    .filter((option) => storedNeeds.includes(option.key))
+    .map((option) => option.key);
   const [editing, setEditing] = useState({});
   const [placementError, setPlacementError] = useState(null);
   const selection = JSON.stringify(assumptions);
@@ -284,6 +287,16 @@ export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
                 people,
                 0,
               )}
+            {needs.includes("commute") &&
+              numberField(
+                "commuters",
+                "徒歩帰宅人数",
+                Footprints,
+                Math.min(people, assumptions.commuters ?? people),
+                "人",
+                people,
+                0,
+              )}
             {needs.includes("carry") &&
               numberField(
                 "teamSize",
@@ -303,12 +316,6 @@ export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
                 9999,
               )}
           </div>
-          {needs.includes("flood") && (
-            <p>
-              吸水バッグ KBG-200
-              は販売終了のため、購入提案は0箱です。保有分は棚から配置できます。
-            </p>
-          )}
         </div>
         <details className="dg-basis">
           <summary>
@@ -321,11 +328,11 @@ export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
             </p>
             <p>
               飲料水は1人1日3
-              L、トイレは1人1日5回を目安とします。食料・徒歩帰宅・暑さ対策を選ばず飲料水を希望する場合は、保存水500
+              L、トイレは1人1日5回を目安とします。食料・暑さ対策を選ばず飲料水を希望する場合は、徒歩帰宅セットを配布しない人に保存水500
               mL入りのミニセットを1人1箱提案し、追加で必要な飲料水を表示します。車載品は別保管とし、拠点用の水とトイレに算入しません。帰宅セットは出発まで拠点で保管する想定です。トイレの不足分は20回・100回セットで補います。
             </p>
             <p>
-              徒歩帰宅・降灰・暑さ対策・衛生用品・毛布・ヘルメットは、選択した用途ごとに1人1セットを配布する想定です。
+              徒歩帰宅セットは指定した帰宅人数に1人1箱を配布します。降灰・暑さ対策・衛生用品・毛布・ヘルメットは、選択した用途ごとに1人1セットを配布する想定です。
             </p>
             <a
               target="_blank"
@@ -418,7 +425,7 @@ export default function Diagnosis({ assumptions, onAssumptions, onApply }) {
           </p>
         )}
         <p className="dg-replace">
-          配置すると、現在の棚の製品をおすすめの内容に入れ替えます。棚画面で取り消せます。
+          配置すると、現在の棚の製品をおすすめの内容に入れ替えます。収納しきれない場合は同じ寸法の棚を横に追加します。棚画面で取り消せます。
         </p>
         <button
           className="dg-apply"

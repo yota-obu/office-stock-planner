@@ -45,7 +45,7 @@ import Dialogs from "./Dialogs.jsx";
 import ProductArt from "./ProductArt.jsx";
 import "./style.css";
 
-const key = "kokobo-shelf-v1";
+const key = "stock-shelf-v1";
 const titles = {
   diagnosis: "備蓄プラン診断",
   shelf: "棚シミュレーター",
@@ -68,7 +68,10 @@ function loadAssumptions() {
   try {
     return {
       ...defaults,
-      ...JSON.parse(localStorage.getItem("kokobo-assumptions-v1")),
+      ...JSON.parse(
+        localStorage.getItem("stock-assumptions-v1") ??
+          localStorage.getItem("kokobo-assumptions-v1"),
+      ),
     };
   } catch {
     return defaults;
@@ -78,7 +81,9 @@ const lookup = Object.fromEntries(products.map((p) => [p.id, p]));
 const money = (n) => n.toLocaleString("ja-JP");
 function readPlan() {
   try {
-    const p = JSON.parse(localStorage.getItem(key));
+    const p = JSON.parse(
+      localStorage.getItem(key) ?? localStorage.getItem("kokobo-shelf-v1"),
+    );
     if (p && isValidPlan(p)) return { plan: p };
     if (p?.rows?.flat().includes("SYS-200") && p.config.depth < 222) {
       const repaired = { ...p, config: { ...p.config, depth: 222 } };
@@ -103,7 +108,7 @@ function Logo() {
         <path d="m18 19 12-7v14l-12 7Z" fill="#c68d4a" />
       </svg>
       <span>
-        KOKOBO<small>備蓄プランナー</small>
+        備蓄プランナー<small>非公式シミュレーター</small>
       </span>
     </div>
   );
@@ -160,10 +165,7 @@ function App() {
   }
   useEffect(() => {
     try {
-      localStorage.setItem(
-        "kokobo-assumptions-v1",
-        JSON.stringify(assumptions),
-      );
+      localStorage.setItem("stock-assumptions-v1", JSON.stringify(assumptions));
     } catch {}
   }, [assumptions]);
   useEffect(() => {
@@ -225,6 +227,15 @@ function App() {
           .toLowerCase()
           .includes(query.trim().toLowerCase()),
     );
+  const racks = plan.rows.length / cfg.levels;
+  useEffect(() => {
+    Z(1);
+  }, [racks, cfg.width, cfg.height, cfg.levels]);
+  const maxZoom = Math.max(3, racks);
+  const rowLabel = (i) =>
+    (racks > 1 ? "棚" + (Math.floor(i / cfg.levels) + 1) + "・" : "") +
+    ((i % cfg.levels) + 1) +
+    "段目";
   function commit(result, message) {
     if (result.error) {
       notify(result.error);
@@ -326,7 +337,10 @@ function App() {
   function drag(e, data) {
     const payload = dragPayload(data);
     flushSync(() => setDragging(payload));
-    e.dataTransfer.setData("application/x-kokobo", JSON.stringify(payload));
+    e.dataTransfer.setData(
+      "application/x-stock-planner",
+      JSON.stringify(payload),
+    );
     e.dataTransfer.effectAllowed = data.row == null ? "copy" : "move";
     ghost.current.style.left = e.clientX + "px";
     ghost.current.style.top = e.clientY + "px";
@@ -643,15 +657,6 @@ function App() {
               <h1>{titles[page]}</h1>
               <p>{descriptions[page]}</p>
             </div>
-            {page === "shelf" && (
-              <button
-                className="primary"
-                onClick={() => D({ type: "estimate" })}
-              >
-                <ReceiptText size={17} />
-                見積もりを確認
-              </button>
-            )}
           </div>
           {page === "diagnosis" ? (
             <Diagnosis
@@ -667,14 +672,7 @@ function App() {
             <>
               <div className="metrics">
                 {[
-                  [
-                    Box,
-                    "収納セット数",
-                    stats.count,
-                    "セット",
-                    "blue",
-                    "estimate",
-                  ],
+                  [Box, "収納セット数", stats.count, "セット", "blue", null],
                   [
                     ChartNoAxesColumnIncreasing,
                     "棚の使用率",
@@ -712,31 +710,42 @@ function App() {
                     "purple",
                     "items",
                   ],
-                ].map(([I, label, value, unit, color, target]) => (
-                  <button
-                    key={label}
-                    onClick={() =>
-                      target === "dimensions"
-                        ? document.querySelector(".widthmeasure input")?.focus()
-                        : D({ type: target })
-                    }
-                  >
-                    <span className={"metricicon " + color}>
-                      <I size={18} />
-                    </span>
-                    <span className="metriclabel">{label}</span>
-                    {target === "items" ? (
-                      <div className="metricContents">
-                        {contents.length ? value : "未配置"}
-                        <ChevronRight size={13} />
-                      </div>
-                    ) : (
-                      <strong>
-                        {value} <small>{unit}</small>
-                      </strong>
-                    )}
-                  </button>
-                ))}
+                ].map(([I, label, value, unit, color, target]) => {
+                  const Tile = target ? "button" : "div";
+                  return (
+                    <Tile
+                      className="metricTile"
+                      key={label}
+                      onClick={
+                        !target
+                          ? undefined
+                          : () =>
+                              target === "dimensions"
+                                ? document
+                                    .querySelector(
+                                      ".widthmeasure input, .canvasfoot input",
+                                    )
+                                    ?.focus()
+                                : D({ type: target })
+                      }
+                    >
+                      <span className={"metricicon " + color}>
+                        <I size={18} />
+                      </span>
+                      <span className="metriclabel">{label}</span>
+                      {target === "items" ? (
+                        <div className="metricContents">
+                          {contents.length ? value : "未配置"}
+                          <ChevronRight size={13} />
+                        </div>
+                      ) : (
+                        <strong>
+                          {value} <small>{unit}</small>
+                        </strong>
+                      )}
+                    </Tile>
+                  );
+                })}
               </div>
               <div className="work">
                 <section
@@ -781,82 +790,134 @@ function App() {
                     >
                       {full ? <X size={16} /> : <Maximize size={16} />}
                     </button>
-                    <div className="shelfscroll">
-                      <div
-                        className="diagram"
-                        style={{
-                          "--ratio": cfg.width / cfg.height,
-                          "--fit-ratio":
-                            cfg.width / ((2 * cfg.height) / cfg.levels),
-                          "--zoom": zoom,
-                        }}
-                      >
-                        <div className="widthmeasure">
-                          <Dimension axis="width" plan={plan} commit={commit} />
-                        </div>
-                        <div className="rack">
-                          {plan.rows.map((row, i) => (
-                            <div
-                              key={i}
-                              data-row={i}
-                              className={"bay " + (hover === i ? "over" : "")}
-                              onDragOver={(e) => {
-                                e.preventDefault();
-                                H(i);
-                              }}
-                              onDragLeave={() => H(null)}
-                              onDrop={(e) => drop(e, i)}
-                            >
-                              <span className="rownum">
-                                {String(i + 1).padStart(2, "0")}
-                              </span>
-                              <div className="shelfinside">
-                                {row.map((id, j) => {
-                                  const p = lookup[id];
+                    <div
+                      style={{
+                        "--rack-count": racks,
+                        "--ratio": cfg.width / cfg.height,
+                        "--zoom": zoom,
+                      }}
+                      className={
+                        "shelfscroll fitCanvas" +
+                        (racks > 1 ? " multiRack" : "")
+                      }
+                      tabIndex={racks > 1 ? 0 : undefined}
+                      aria-label={
+                        racks > 1
+                          ? "横並びの棚。横方向にスクロールできます"
+                          : undefined
+                      }
+                    >
+                      <div className="rackStrip">
+                        {Array.from({ length: racks }, (_, rackIndex) => (
+                          <div
+                            className="diagram"
+                            key={rackIndex}
+                            style={{
+                              "--ratio": cfg.width / cfg.height,
+                              "--fit-ratio":
+                                cfg.width / ((2 * cfg.height) / cfg.levels),
+                              "--zoom": zoom,
+                            }}
+                          >
+                            {racks === 1 && (
+                              <div className="widthmeasure">
+                                <Dimension
+                                  axis="width"
+                                  plan={plan}
+                                  commit={commit}
+                                />
+                              </div>
+                            )}
+                            <div className="rack">
+                              {plan.rows
+                                .slice(
+                                  rackIndex * cfg.levels,
+                                  (rackIndex + 1) * cfg.levels,
+                                )
+                                .map((row, tier) => {
+                                  const i = rackIndex * cfg.levels + tier;
                                   return (
-                                    <button
-                                      key={j}
-                                      className="spine"
-                                      aria-pressed={selection.some(
-                                        (v) => v.row === i && v.index === j,
-                                      )}
-                                      data-index={j}
-                                      onPointerDown={(e) =>
-                                        touchStart(e, { row: i, index: j })
+                                    <div
+                                      key={i}
+                                      data-row={i}
+                                      className={
+                                        "bay " + (hover === i ? "over" : "")
                                       }
-                                      onDrop={(e) => {
-                                        e.stopPropagation();
-                                        drop(e, i, j);
+                                      onDragOver={(e) => {
+                                        e.preventDefault();
+                                        H(i);
                                       }}
-                                      draggable
-                                      onDragStart={(e) =>
-                                        drag(e, { row: i, index: j })
-                                      }
-                                      title={p.name}
-                                      onClick={() => toggleSelection(i, j)}
-                                      style={{
-                                        width: (p.w / cfg.width) * 100 + "%",
-                                        height:
-                                          (p.h / (cfg.height / cfg.levels)) *
-                                            100 +
-                                          "%",
-                                      }}
+                                      onDragLeave={() => H(null)}
+                                      onDrop={(e) => drop(e, i)}
                                     >
-                                      <ProductArt product={p} spine />
-                                    </button>
+                                      <span className="rownum">
+                                        {String(tier + 1).padStart(2, "0")}
+                                      </span>
+                                      <div className="shelfinside">
+                                        {row.map((id, j) => {
+                                          const p = lookup[id];
+                                          return (
+                                            <button
+                                              key={j}
+                                              className="spine"
+                                              aria-pressed={selection.some(
+                                                (v) =>
+                                                  v.row === i && v.index === j,
+                                              )}
+                                              data-index={j}
+                                              onPointerDown={(e) =>
+                                                touchStart(e, {
+                                                  row: i,
+                                                  index: j,
+                                                })
+                                              }
+                                              onDrop={(e) => {
+                                                e.stopPropagation();
+                                                drop(e, i, j);
+                                              }}
+                                              draggable
+                                              onDragStart={(e) =>
+                                                drag(e, { row: i, index: j })
+                                              }
+                                              title={p.name}
+                                              onClick={() =>
+                                                toggleSelection(i, j)
+                                              }
+                                              style={{
+                                                width:
+                                                  (p.w / cfg.width) * 100 + "%",
+                                                height:
+                                                  (p.h /
+                                                    (cfg.height / cfg.levels)) *
+                                                    100 +
+                                                  "%",
+                                              }}
+                                            >
+                                              <ProductArt product={p} spine />
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
                                   );
                                 })}
-                              </div>
                             </div>
-                          ))}
-                        </div>
-                        <div className="heightmeasure">
-                          <Dimension
-                            axis="height"
-                            plan={plan}
-                            commit={commit}
-                          />
-                        </div>
+                            {racks > 1 && (
+                              <span className="rackLabel">
+                                棚 {rackIndex + 1}
+                              </span>
+                            )}
+                            {racks === 1 && (
+                              <div className="heightmeasure">
+                                <Dimension
+                                  axis="height"
+                                  plan={plan}
+                                  commit={commit}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
                     <div className="zoom">
@@ -864,19 +925,22 @@ function App() {
                         title="縮小"
                         disabled={zoom <= 0.6}
                         onClick={() =>
-                          Z((v) => Math.max(0.6, +(v - 0.1).toFixed(1)))
+                          Z((v) => Math.max(0.6, +(v / 1.25).toFixed(1)))
                         }
                       >
                         <Minus size={13} />
                       </button>
-                      <button title="標準倍率" onClick={() => Z(1)}>
-                        {Math.round(zoom * 100)}%
+                      <button
+                        title="全ての棚が収まる倍率に戻す"
+                        onClick={() => Z(1)}
+                      >
+                        {zoom === 1 ? "全体表示" : Math.round(zoom * 100) + "%"}
                       </button>
                       <button
                         title="拡大"
-                        disabled={zoom >= 1.5}
+                        disabled={zoom >= maxZoom}
                         onClick={() =>
-                          Z((v) => Math.min(1.5, +(v + 0.1).toFixed(1)))
+                          Z((v) => Math.min(maxZoom, +(v * 1.25).toFixed(1)))
                         }
                       >
                         <Plus size={13} />
@@ -886,9 +950,19 @@ function App() {
                   <div className="canvasfoot">
                     <span>
                       <Layers3 size={15} />
-                      {cfg.levels}段ラック
+                      {cfg.levels}段ラック × {racks}台
                     </span>
                     <span>
+                      {racks > 1 && (
+                        <>
+                          <Dimension axis="width" plan={plan} commit={commit} />
+                          <Dimension
+                            axis="height"
+                            plan={plan}
+                            commit={commit}
+                          />
+                        </>
+                      )}
                       <Dimension axis="depth" plan={plan} commit={commit} />
                     </span>
                   </div>
@@ -896,7 +970,7 @@ function App() {
                     <summary>棚の製品をリストから選択</summary>
                     {plan.rows.map((row, i) => (
                       <fieldset key={i}>
-                        <legend>{i + 1}段目</legend>
+                        <legend>{rowLabel(i)}</legend>
                         {row.length ? (
                           row.map((id, j) => (
                             <label key={j}>
@@ -942,7 +1016,7 @@ function App() {
                         </option>
                         {plan.rows.map((_, i) => (
                           <option value={i} key={i}>
-                            {i + 1}段目
+                            {rowLabel(i)}
                           </option>
                         ))}
                       </select>
@@ -973,7 +1047,7 @@ function App() {
                       const used = row.reduce((n, id) => n + lookup[id].w, 0);
                       return (
                         <div className="capacityrow" key={i}>
-                          <b>{i + 1} 段目</b>
+                          <b>{rowLabel(i)}</b>
                           <div>
                             <i
                               style={{ width: (used / cfg.width) * 100 + "%" }}
@@ -1022,6 +1096,13 @@ function App() {
             </>
           )}
         </div>
+        <footer className="siteNotice">
+          <strong>備蓄プランナーについて</strong>
+          <p>
+            本サイトはキングジム製品を対象とした非公式のシミュレーターです。株式会社キングジムによる運営・監修はありません。
+          </p>
+          <p>掲載する会社名・製品名などの商標は、各権利者に帰属します。</p>
+        </footer>
       </main>
       {dialog?.type === "proposal" ? (
         <ProposalDialog

@@ -75,7 +75,7 @@ function pageModel() {
 }
 function heading(page, title, date, appendix = false) {
   page.rect(0, 0, 210, 3, accent);
-  page.text("KOKOBO  備蓄プランナー", 12, 10, 100, 5, 3.4, {
+  page.text("防災備蓄プランナー", 12, 10, 100, 5, 3.4, {
     bold: true,
     color: accent,
   });
@@ -85,7 +85,7 @@ function heading(page, title, date, appendix = false) {
 function footer(page, index, count) {
   page.rect(12, 283, 186, 0.3, line);
   page.text(
-    "キングジム製品対応  /  防災備蓄 配置提案書",
+    "非公式の提案資料です。「キングジム」「KING JIM」は株式会社キングジムの商標です。",
     12,
     285,
     156,
@@ -101,20 +101,26 @@ function footer(page, index, count) {
 function drawShelf(page, plan, imgs, x, y, w, h) {
   page.rect(x, y, w, h, "#f0f3ed");
   const { width, height, levels } = plan.config;
-  const board = 0.64;
+  const racks = Math.ceil(plan.rows.length / levels);
+  const areaWidth = w - 8;
+  const gap = Math.min(2, areaWidth / (5 * racks));
+  const maxRackWidth = (areaWidth - gap * (racks - 1)) / racks;
+  const board = Math.min(0.64, maxRackWidth * 0.04);
   const scale = Math.min(
-    (w - 8 - board * 2) / width,
+    (maxRackWidth - board * 2) / width,
     (h - 6 - board * (levels + 1)) / height,
   );
-  const bayWidth = width * scale,
-    bayHeight = (height / levels) * scale;
-  const totalWidth = bayWidth + board * 2,
-    totalHeight = height * scale + board * (levels + 1);
-  const l = x + (w - totalWidth) / 2,
-    t = y + (h - totalHeight) / 2;
-  page.rect(l, t, totalWidth, totalHeight, "#788774");
+  const bayWidth = width * scale;
+  const bayHeight = (height / levels) * scale;
+  const rackWidth = bayWidth + board * 2;
+  const rackHeight = height * scale + board * (levels + 1);
+  const left = x + (w - racks * rackWidth - (racks - 1) * gap) / 2;
+  const top = y + (h - rackHeight) / 2;
   plan.rows.forEach((row, i) => {
-    const rTop = t + board + i * (board + bayHeight);
+    const l = left + Math.floor(i / levels) * (rackWidth + gap);
+    const tier = i % levels;
+    if (tier === 0) page.rect(l, top, rackWidth, rackHeight, "#788774");
+    const rTop = top + board + tier * (board + bayHeight);
     page.rect(l + board, rTop, bayWidth, bayHeight, "#dce3d6");
     let offset = l + board;
     for (const id of row) {
@@ -159,7 +165,7 @@ function proposalPages(plan, stats, imgs, { recipient, people, days }) {
   page.text("棚の配置図", 12, 57, 100, 7, 4.5, { bold: true });
   drawShelf(page, plan, imgs, 12, 67, 109, 48);
   page.text(
-    `内寸  幅 ${nf(width)} × 高さ ${nf(height)} × 奥行 ${nf(depth)} mm  /  ${levels}段`,
+    `1台の内寸  幅 ${nf(width)} × 高さ ${nf(height)} × 奥行 ${nf(depth)} mm  /  ${levels}段 × ${Math.ceil(plan.rows.length / levels)}台`,
     12,
     116,
     109,
@@ -323,7 +329,7 @@ async function pdfFile(pages, filename) {
   const pdf = new jsPDF({ format: "a4", unit: "mm", compress: true });
   pdf.setProperties({
     title: "防災備蓄 配置提案書",
-    creator: "KOKOBO 備蓄プランナー",
+    creator: "防災備蓄プランナー",
   });
   const canvas = document.createElement("canvas"),
     scale = 9;
@@ -396,7 +402,7 @@ function powerTable(slide, n) {
 async function powerFile(pages, filename) {
   const { default: PptxGenJS } = await import("pptxgenjs");
   const ppt = new PptxGenJS();
-  ppt.author = "KOKOBO 備蓄プランナー";
+  ppt.author = "防災備蓄プランナー";
   ppt.title = "防災備蓄 配置提案書";
   ppt.defineLayout({ name: "A4", width: inch(210), height: inch(297) });
   ppt.layout = "A4";

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Minus, Plus } from "lucide-react";
-import { limits, resize } from "./engine.js";
+import { limits, resize, rackCount } from "./engine.js";
 import "./shelf-controls.css";
 
 export function TierControl({ plan, commit }) {
@@ -20,7 +20,9 @@ export function TierControl({ plan, commit }) {
       >
         <Minus size={15} />
       </button>
-      <b>{levels} 段</b>
+      <b>
+        {levels} 段{rackCount(plan) > 1 ? " / 台" : ""}
+      </b>
       <button
         aria-label="段を増やす"
         disabled={levels >= limits.levels[1]}
