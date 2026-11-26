@@ -6,9 +6,9 @@ export const byId = (id) => lookup.get(id);
 export const used = (row) => row.reduce((width, id) => width + byId(id).w, 0);
 export const defaultConfig = {
   width: 1050,
-  height: 680,
+  height: 1360,
   depth: 350,
-  levels: 2,
+  levels: 4,
 };
 export const limits = {
   width: [50, 4000],
