@@ -49,18 +49,6 @@ export default function WidthCalculator() {
           <LibraryBig size={19} />
           製品と数量
         </h2>
-        <label>
-          棚の内幅（mm）
-          <input
-            className="wcWidth"
-            type="number"
-            step="any"
-            min="0"
-            inputMode="decimal"
-            value={shelfWidth}
-            onChange={(event) => setShelfWidth(event.target.value)}
-          />
-        </label>
         {lines.map(({ id, count }, i) => {
           const { p, qty } = entries[i];
           const setId = (id) => update(i, { id });
@@ -160,24 +148,41 @@ export default function WidthCalculator() {
               ＝ <b>{format(total / 1000)} m</b>
             </p>
             <WidthRun entries={entries} />
-            <p className="wcShelfNote">
-              {!validWidth ? (
-                "棚の内幅に0より大きい数値を入力すると、必要な段数が表示されます。"
-              ) : fits && lines.length > 1 ? (
-                <>
-                  空の棚（内幅 {format(width)} mm）に入力順で詰めると{" "}
-                  <b>{format(rows)} 段</b>を使用します。
-                </>
-              ) : fits ? (
-                <>
-                  内幅 {format(width)} mm では、1段に <b>{format(perRow)} 個</b>
-                  収納できます。{format(qty)} 個には{" "}
-                  <b>{format(Math.ceil(qty / perRow))} 段</b>必要です。
-                </>
-              ) : (
-                "入力した棚幅を超える製品があります。"
-              )}
-            </p>
+            <section className="wcCompare">
+              <h3>棚幅と比較</h3>
+              <label>
+                棚の内幅（mm）
+                <input
+                  aria-describedby="wc-capacity"
+                  className="wcWidth"
+                  type="number"
+                  step="any"
+                  min="0"
+                  inputMode="decimal"
+                  value={shelfWidth}
+                  onChange={(event) => setShelfWidth(event.target.value)}
+                />
+              </label>
+              <p className="wcShelfNote" id="wc-capacity">
+                {!validWidth ? (
+                  "棚の内幅に0より大きい数値を入力すると、必要な段数が表示されます。"
+                ) : fits && lines.length > 1 ? (
+                  <>
+                    空の棚（内幅 {format(width)} mm）に入力順で詰めると{" "}
+                    <b>{format(rows)} 段</b>を使用します。
+                  </>
+                ) : fits ? (
+                  <>
+                    内幅 {format(width)} mm では、1段に{" "}
+                    <b>{format(perRow)} 個</b>
+                    収納できます。{format(qty)} 個には{" "}
+                    <b>{format(Math.ceil(qty / perRow))} 段</b>必要です。
+                  </>
+                ) : (
+                  "入力した棚幅を超える製品があります。"
+                )}
+              </p>
+            </section>
           </>
         ) : (
           <p className="wcInvalid">数量は1〜99,999の整数で入力してください。</p>
