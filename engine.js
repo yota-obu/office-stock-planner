@@ -234,6 +234,10 @@ export function applyRecommendations(plan, lines) {
   return { plan: { config: { ...plan.config }, rows } };
 }
 
+export function emptyDefaultPlan() {
+  return blank(defaultConfig);
+}
+
 export function initialPlan() {
   let plan = blank(defaultConfig);
   const choices = products.filter(

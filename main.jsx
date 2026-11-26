@@ -8,6 +8,7 @@ import {
   Ruler,
   Trash2,
   Undo2,
+  RotateCcw,
   LibraryBig,
   ReceiptText,
   PanelTop,
@@ -32,6 +33,8 @@ import {
 import { products } from "./catalog.js";
 import {
   initialPlan,
+  emptyDefaultPlan,
+  defaultConfig,
   add,
   summarize,
   applyRecommendations,
@@ -787,6 +790,10 @@ function App() {
                       <Trash2 size={14} />
                       棚を空にする
                     </button>
+                    <button onClick={() => D({ type: "reset" })}>
+                      <RotateCcw size={14} />
+                      リセット
+                    </button>
                   </div>
                   <div className="canvas">
                     <div className="viewtag">
@@ -1132,13 +1139,18 @@ function App() {
             </button>
           </section>
         </div>
-      ) : dialog?.type === "clear" ? (
+      ) : dialog?.type === "clear" || dialog?.type === "reset" ? (
         <div className="helpback">
           <section role="alertdialog" aria-modal="true" className="help">
-            <h2>棚を空にしますか？</h2>
+            <h2>
+              {dialog.type === "reset"
+                ? "棚を初期設定に戻しますか？"
+                : "棚を空にしますか？"}
+            </h2>
             <p>
-              配置中の{stats.count}
-              セットをすべて取り出します。棚の寸法と段数は引き続き使えます。
+              {dialog.type === "reset"
+                ? `配置を空にし、幅 ${money(defaultConfig.width)} × 高さ ${defaultConfig.height} × 奥行 ${defaultConfig.depth} mm、${defaultConfig.levels}段の棚1台に戻します。`
+                : `配置中の${stats.count}セットをすべて取り出します。棚の寸法と段数は引き続き使えます。`}
             </p>
             <button autoFocus className="smallbutton" onClick={() => D(null)}>
               キャンセル
@@ -1146,12 +1158,21 @@ function App() {
             <button
               className="primary"
               onClick={() => {
-                changePlan({ ...plan, rows: plan.rows.map(() => []) });
+                const reset = dialog.type === "reset";
+                changePlan(
+                  reset
+                    ? emptyDefaultPlan()
+                    : { ...plan, rows: plan.rows.map(() => []) },
+                );
+                if (reset) {
+                  Z(1);
+                  shelfView.current?.scrollTo(0, 0);
+                }
                 D(null);
-                notify("棚を空にしました");
+                notify(reset ? "棚を初期設定に戻しました" : "棚を空にしました");
               }}
             >
-              すべて取り出す
+              {dialog.type === "reset" ? "リセットする" : "すべて取り出す"}
             </button>
           </section>
         </div>
