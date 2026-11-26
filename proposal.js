@@ -75,24 +75,18 @@ function pageModel() {
 }
 function heading(page, title, date, appendix = false) {
   page.rect(0, 0, 210, 3, accent);
-  page.text("防災備蓄プランナー", 12, 10, 100, 5, 3.4, {
-    bold: true,
-    color: accent,
-  });
+  if (appendix)
+    page.text("防災備蓄プランナー", 12, 10, 100, 5, 3.4, {
+      bold: true,
+      color: accent,
+    });
   page.text(date, 120, 10, 78, 5, 2.85, { align: "right", color: muted });
-  page.text(title, 12, 20, 186, 12, appendix ? 7 : 8, { bold: true });
+  page.text(title, 12, appendix ? 20 : 9, 186, 12, appendix ? 7 : 8, {
+    bold: true,
+  });
 }
 function footer(page, index, count) {
   page.rect(12, 283, 186, 0.3, line);
-  page.text(
-    "非公式の提案資料です。「キングジム」「KING JIM」は株式会社キングジムの商標です。",
-    12,
-    285,
-    156,
-    5,
-    2.7,
-    { color: muted },
-  );
   page.text(`${index + 1} / ${count}`, 169, 285, 29, 5, 2.7, {
     align: "right",
     color: muted,
@@ -146,52 +140,48 @@ function proposalPages(plan, stats, imgs, { recipient, people, days }) {
   const page = pageModel(),
     pages = [page];
   const { width, height, levels } = plan.config;
-  heading(page, "防災備蓄 配置提案書", date);
+  heading(page, "提案書", date);
   const recipientName = String(recipient || "")
     .trim()
     .replace(/\s*御中\s*$/u, "");
   if (recipientName)
-    page.text(recipientName + " 御中", 12, 34, 186, 7, 4.4, { bold: true });
+    page.text(recipientName + " 御中", 12, 23, 186, 7, 4.4, { bold: true });
   page.text(
     `計画条件　${nf(people)}人 × ${nf(days)}日間`,
     12,
-    43,
+    32,
     186,
     6,
     3.45,
     { color: muted },
   );
-  page.rect(12, 53, 186, 0.35, line);
-  page.text("棚の配置図", 12, 57, 100, 7, 4.5, { bold: true });
-  drawShelf(page, plan, imgs, 12, 67, 109, 48);
+  page.rect(12, 41, 186, 0.35, line);
+  page.text("防災セット配置イメージ", 12, 45, 186, 7, 4.5, { bold: true });
+  const imageHeight = stats.lines.length > 14 ? 62 : 82;
+  const imageBottom = 55 + imageHeight;
+  drawShelf(page, plan, imgs, 12, 55, 124, imageHeight);
   page.text(
     `1台の内寸  幅 ${nf(width)} × 高さ ${nf(height)} mm  /  ${levels}段 × ${Math.ceil(plan.rows.length / levels)}台`,
     12,
-    116,
-    109,
+    imageBottom + 1,
+    186,
     6,
     2.85,
     { color: muted },
   );
-  page.text("配置したセット数", 130, 68, 67, 5, 3.0, { color: muted });
-  page.text(`${nf(stats.count)} セット`, 130, 74, 67, 9, 5.8, { bold: true });
-  page.text(
-    `棚幅の使用率 ${stats.fill}%　内容物 ${nf(stats.items.length)}種類`,
-    130,
-    86,
-    68,
-    5,
-    2.9,
-    { color: muted },
-  );
-  page.rect(129, 96, 69, 23, accent);
-  page.text("概算合計（税込）", 133, 99, 61, 5, 3.1, { color: "#e6eee4" });
-  page.text(yen(stats.price), 133, 105, 61, 11, 6.4, {
+  page.text("配置したセット数", 142, 58, 56, 5, 3, { color: muted });
+  page.text(`${nf(stats.count)} セット`, 142, 64, 56, 9, 5.8, { bold: true });
+  page.rect(141, 80, 57, 23, accent);
+  page.text("概算合計（税込）", 145, 83, 49, 5, 3.1, { color: "#e6eee4" });
+  page.text(yen(stats.price), 145, 89, 49, 11, 6, {
     bold: true,
     color: "#ffffff",
     align: "right",
   });
-  page.text("製品別の見積明細", 12, 128, 160, 7, 4.5, { bold: true });
+  page.text("製品別の見積明細", 12, imageBottom + 11, 160, 7, 4.5, {
+    bold: true,
+  });
+  const tableTop = imageBottom + 21;
   const estimateRows = [
     ["製品名", "品番", "税込単価", "数量", "税込小計"],
     ...stats.lines.map(({ product: p, count }) => [
@@ -204,16 +194,24 @@ function proposalPages(plan, stats, imgs, { recipient, people, days }) {
   ];
   page.table(
     tableX,
-    139,
+    tableTop,
     [78, 31, 27, 18, 32],
     estimateRows,
-    Math.min(8.5, 124 / estimateRows.length),
+    Math.min(8.5, (263 - tableTop) / estimateRows.length),
     { numeric: [2, 3, 4], size: 2.85 },
   );
   if (!stats.count)
-    page.text("棚に配置した製品はありません。", 15, 150, 180, 6, 3.3, {
-      color: muted,
-    });
+    page.text(
+      "棚に配置した製品はありません。",
+      15,
+      tableTop + 11,
+      180,
+      6,
+      3.3,
+      {
+        color: muted,
+      },
+    );
   page.text(
     "棚に配置した製品の税込単価で計算しています。送料は含みません。",
     12,
@@ -328,7 +326,7 @@ async function pdfFile(pages, filename) {
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ format: "a4", unit: "mm", compress: true });
   pdf.setProperties({
-    title: "防災備蓄 配置提案書",
+    title: "提案書",
     creator: "防災備蓄プランナー",
   });
   const canvas = document.createElement("canvas"),
@@ -403,7 +401,7 @@ async function powerFile(pages, filename) {
   const { default: PptxGenJS } = await import("pptxgenjs");
   const ppt = new PptxGenJS();
   ppt.author = "防災備蓄プランナー";
-  ppt.title = "防災備蓄 配置提案書";
+  ppt.title = "提案書";
   ppt.defineLayout({ name: "A4", width: inch(210), height: inch(297) });
   ppt.layout = "A4";
   ppt.theme = {
@@ -474,7 +472,7 @@ export async function createProposal(plan, assumptions = {}, format = "pdf") {
     .trim()
     .replace(/[\\/:*?"<>|\u0000-\u001f]/gu, "")
     .slice(0, 60);
-  const name = (safe ? safe + "_" : "") + "防災備蓄_配置提案書";
+  const name = (safe ? safe + "_" : "") + "提案書";
   if (format === "pptx") return powerFile(pages, name);
   return pdfFile(pages, name);
 }

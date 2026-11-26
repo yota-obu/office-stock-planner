@@ -73,7 +73,7 @@ export default function ProposalDialog({
       </div>
       <form className="kd-body kd-stack" onSubmit={submit}>
         <p>
-          棚の配置図、製品別の見積明細、内容物の数量と用途をまとめて出力します。
+          防災セット配置イメージ、製品別の見積明細、内容物の数量と用途をまとめて出力します。
         </p>
         <label className="kd-field">
           宛名（任意）
