@@ -1256,12 +1256,6 @@ header,
 .multiRack .diagram {
   margin: auto 0;
 }
-.canvaspanel .multiRack .diagram {
-  width: calc(
-    min(49%, (clamp(435px, 42vw, 660px) - 155px) * var(--fit-ratio)) *
-      var(--zoom)
-  );
-}
 .rackLabel {
   position: absolute;
   top: calc(100% + 11px);
@@ -1283,12 +1277,6 @@ header,
   height: 1px;
 }
 @media (max-width: 720px) {
-  .canvaspanel .multiRack .diagram {
-    width: calc(
-      min(73%, (clamp(350px, 90vw, 490px) - 150px) * var(--fit-ratio)) *
-        var(--zoom)
-    );
-  }
   .siteNotice {
     font-size: 12px;
   }
