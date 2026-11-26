@@ -95,27 +95,19 @@
   gap: 0;
 }
 .fitCanvas .rackStrip {
-  --rack-gap: min(24px, calc(12cqw / var(--rack-count)));
   display: flex;
   align-items: center;
-  gap: var(--rack-gap);
+  gap: 24px;
   margin: auto;
   flex: none;
 }
 .canvaspanel .fitCanvas .diagram {
-  width: calc(
-    min(
-        (100cqw - (var(--rack-count) - 1) * var(--rack-gap) - 2px) /
-          var(--rack-count),
-        (100cqh - 2px) * var(--ratio)
-      ) *
-      var(--zoom)
-  );
+  width: calc(min(100cqw - 2px, (100cqh - 2px) * var(--ratio)) * var(--zoom));
   margin: 0;
   flex: none;
 }
 .canvaspanel .multiRack.fitCanvas {
-  padding-inline: 12px;
+  padding-inline: 30px 45px;
 }
 .canvaspanel .multiRack .rownum {
   display: none;
@@ -143,10 +135,4 @@
 }
 .rackNav > button {
   min-height: 30px;
-}
-.canvaspanel .fitCanvas[data-browse="true"] .diagram {
-  width: calc(min(88cqw, (100cqh - 2px) * var(--ratio)) * var(--zoom));
-}
-.fitCanvas[data-browse="true"] .rackStrip {
-  gap: 24px;
 }

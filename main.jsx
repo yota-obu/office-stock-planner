@@ -227,7 +227,6 @@ function App() {
       return result;
     }
     changePlan(result.plan);
-    setBrowseShelves(false);
     navigate("shelf");
     notify("おすすめの製品を棚に配置しました");
     return result;
@@ -271,7 +270,6 @@ function App() {
           .includes(query.trim().toLowerCase()),
     );
   const [itemsOpen, setItemsOpen] = useState(false);
-  const [browseShelves, setBrowseShelves] = useState(false);
   const shelfView = useRef(null),
     scrollToNew = useRef(false);
   const racks = plan.rows.length / cfg.levels;
@@ -858,7 +856,6 @@ function App() {
                           title="棚を追加"
                           onClick={() => {
                             scrollToNew.current = true;
-                            setBrowseShelves(true);
                             changePlan({
                               ...plan,
                               rows: [
@@ -901,7 +898,6 @@ function App() {
                     </button>
                     <div
                       style={{
-                        "--rack-count": racks,
                         "--ratio": cfg.width / cfg.height,
                         "--zoom": zoom,
                       }}
@@ -910,7 +906,6 @@ function App() {
                         (racks > 1 ? " multiRack" : "")
                       }
                       ref={shelfView}
-                      data-browse={browseShelves && racks > 1}
                       tabIndex={racks > 1 ? 0 : undefined}
                       aria-label={
                         racks > 1
@@ -1042,17 +1037,10 @@ function App() {
                         <Minus size={13} />
                       </button>
                       <button
-                        title="全ての棚が収まる倍率に戻す"
-                        onClick={() => {
-                          setBrowseShelves(false);
-                          Z(1);
-                        }}
+                        title="棚1台の縦横が収まる倍率に戻す"
+                        onClick={() => Z(1)}
                       >
-                        {browseShelves && racks > 1
-                          ? "全体表示に戻す"
-                          : zoom === 1
-                            ? "全体表示"
-                            : Math.round(zoom * 100) + "%"}
+                        {zoom === 1 ? "1台全体" : Math.round(zoom * 100) + "%"}
                       </button>
                       <button
                         title="拡大"
@@ -1087,46 +1075,31 @@ function App() {
                   {racks > 1 && (
                     <div className="rackNav">
                       <button
-                        className="smallbutton"
-                        onClick={() => {
-                          setBrowseShelves(!browseShelves);
-                          Z(1);
-                        }}
+                        aria-label="左の棚へ"
+                        onClick={() =>
+                          shelfView.current.scrollBy({
+                            left:
+                              -shelfView.current.querySelector(".diagram")
+                                .offsetWidth - 24,
+                            behavior: "smooth",
+                          })
+                        }
                       >
-                        {browseShelves
-                          ? "全ての棚を表示"
-                          : "横スクロールで見る"}
+                        ←
                       </button>
-                      {browseShelves && (
-                        <>
-                          <button
-                            aria-label="左の棚へ"
-                            onClick={() =>
-                              shelfView.current.scrollBy({
-                                left:
-                                  -shelfView.current.querySelector(".diagram")
-                                    .offsetWidth - 24,
-                                behavior: "smooth",
-                              })
-                            }
-                          >
-                            ←
-                          </button>
-                          <button
-                            aria-label="右の棚へ"
-                            onClick={() =>
-                              shelfView.current.scrollBy({
-                                left:
-                                  shelfView.current.querySelector(".diagram")
-                                    .offsetWidth + 24,
-                                behavior: "smooth",
-                              })
-                            }
-                          >
-                            →
-                          </button>
-                        </>
-                      )}
+                      <button
+                        aria-label="右の棚へ"
+                        onClick={() =>
+                          shelfView.current.scrollBy({
+                            left:
+                              shelfView.current.querySelector(".diagram")
+                                .offsetWidth + 24,
+                            behavior: "smooth",
+                          })
+                        }
+                      >
+                        →
+                      </button>
                     </div>
                   )}
                   {selection.length > 0 && (
