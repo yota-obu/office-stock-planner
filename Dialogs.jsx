@@ -5,6 +5,7 @@ import {
   Calculator,
   Check,
   ClipboardList,
+  ChartNoAxesColumnIncreasing,
   Download,
   Package,
   Plus,
@@ -20,6 +21,7 @@ import {
   remove,
   summarize,
   summarizeContents,
+  used,
 } from "./engine.js";
 import { itemDescription } from "./content-info.js";
 import "./dialogs.css";
@@ -30,11 +32,13 @@ const names = {
   product: "製品の詳細",
   estimate: "見積もり",
   items: "内容品の集計",
+  capacity: "各段の空きスペース",
 };
 const symbols = {
   product: Box,
   estimate: ClipboardList,
   items: Package,
+  capacity: ChartNoAxesColumnIncreasing,
 };
 function Field({ label, children }) {
   return (
@@ -391,6 +395,32 @@ function ActiveDialog({ dialog, onClose, plan, onChange, onNotify }) {
       <div className="kd-body">
         {dialog.type === "product" ? (
           <Product dialog={dialog} plan={plan} accept={accept} />
+        ) : dialog.type === "capacity" ? (
+          <div className="capacityDetail">
+            <p>
+              棚の使用率 <strong>{summarize(plan).fill}%</strong>　内幅{" "}
+              {format(plan.config.width)} mm
+            </p>
+            {plan.rows.map((row, i) => {
+              const width = used(row);
+              return (
+                <div className="capacityrow" key={i}>
+                  <b>
+                    棚 {Math.floor(i / plan.config.levels) + 1}・
+                    {(i % plan.config.levels) + 1}段目
+                  </b>
+                  <div>
+                    <i
+                      style={{ width: (100 * width) / plan.config.width + "%" }}
+                    />
+                  </div>
+                  <span>
+                    残り <strong>{format(plan.config.width - width)}</strong> mm
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <Report plan={plan} mode={dialog.type} />
         )}

@@ -765,7 +765,7 @@ function App() {
                     stats.fill,
                     "%",
                     "green",
-                    "dimensions",
+                    "capacity",
                   ],
                   [
                     ReceiptText,
@@ -802,18 +802,7 @@ function App() {
                     <Tile
                       className="metricTile"
                       key={label}
-                      onClick={
-                        !target
-                          ? undefined
-                          : () =>
-                              target === "dimensions"
-                                ? document
-                                    .querySelector(
-                                      ".widthmeasure input, .canvasfoot input",
-                                    )
-                                    ?.focus()
-                                : D({ type: target })
-                      }
+                      onClick={!target ? undefined : () => D({ type: target })}
                     >
                       <span className={"metricicon " + color}>
                         <I size={18} />
@@ -1188,27 +1177,6 @@ function App() {
                     {dragging?.row != null
                       ? "棚の外で離すと取り出します。"
                       : "背表紙をクリックして複数選択し、まとめてドラッグできます。"}
-                  </div>
-                  <div className="capacity">
-                    <div className="capacitytitle">
-                      <h3>各段の空きスペース</h3>
-                    </div>
-                    {plan.rows.map((row, i) => {
-                      const used = row.reduce((n, id) => n + lookup[id].w, 0);
-                      return (
-                        <div className="capacityrow" key={i}>
-                          <b>{rowLabel(i)}</b>
-                          <div>
-                            <i
-                              style={{ width: (used / cfg.width) * 100 + "%" }}
-                            />
-                          </div>
-                          <span>
-                            残り <strong>{money(cfg.width - used)}</strong> mm
-                          </span>
-                        </div>
-                      );
-                    })}
                   </div>
                   <div className="proposalFooter">
                     <button
