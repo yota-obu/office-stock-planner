@@ -1,7 +1,7 @@
 import React from "react";
 import "./width-comparison.css";
 
-const references = [
+export const references = [
   { name: "A4用紙の短辺", width: 210, kind: "paper" },
   { name: "長机の幅", width: 1800, kind: "desk" },
   { name: "バスの全長", width: 12000, kind: "bus" },
@@ -51,7 +51,15 @@ function Illustration({ kind }) {
   };
   return (
     <svg
-      viewBox="0 0 144 80"
+      viewBox={
+        {
+          paper: "45 4 56 72",
+          desk: "11 21 119 49",
+          bus: "7 23 130 47",
+          track: "5 23 134 35",
+        }[kind]
+      }
+      preserveAspectRatio="none"
       aria-hidden="true"
       stroke="#405b50"
       strokeWidth="1.6"
@@ -63,33 +71,17 @@ function Illustration({ kind }) {
   );
 }
 
-export default function WidthComparison({ total }) {
-  const upper = references.findIndex((r) => r.width > total);
-  const pair =
-    upper < 0
-      ? references.slice(-2)
-      : references.slice(Math.max(0, upper - 1), Math.max(0, upper - 1) + 2);
+export default function WidthComparison({ reference, scale, left }) {
+  const height =
+    { paper: 297, desk: 700, bus: 3100, track: 9500 }[reference.kind] * scale;
   return (
-    <section className="width-comparison">
-      <h3>身近なものに換算すると</h3>
-      <div>
-        {pair.map((ref) => {
-          const count = total / ref.width;
-          const rounded = Number(count.toPrecision(2)).toLocaleString("ja-JP", {
-            maximumSignificantDigits: 2,
-          });
-          return (
-            <figure key={ref.kind}>
-              <Illustration kind={ref.kind} />
-              <figcaption>
-                {ref.name}
-                <strong>約 {rounded} 倍</strong>
-                <small>比較の基準 {ref.width.toLocaleString("ja-JP")} mm</small>
-              </figcaption>
-            </figure>
-          );
-        })}
+    <div className="comparisonLane" style={{ height }}>
+      <div
+        className="comparisonObject"
+        style={{ left: -left, width: reference.width * scale, height }}
+      >
+        <Illustration kind={reference.kind} />
       </div>
-    </section>
+    </div>
   );
 }

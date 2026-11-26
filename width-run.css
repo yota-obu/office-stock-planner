@@ -17,15 +17,18 @@
 .widthRunTrack {
   position: relative;
   min-width: 100%;
-  height: 122px;
 }
 .widthRunWindow {
   position: sticky;
   left: 0;
-  height: 100%;
+
   overflow: hidden;
 }
-.widthRunWindow > div {
+.productLane {
+  position: relative;
+  border-bottom: 1px solid #a6ad9c;
+}
+.productLane > div {
   position: absolute;
   bottom: 0;
 }

@@ -1,38 +1,34 @@
-.width-comparison {
-  border-top: 1px solid #ced9cc;
-  margin-top: 22px;
-  padding-top: 16px;
+.comparisonChoice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  margin-bottom: 9px;
 }
-.width-comparison h3 {
-  font-size: 15px;
-  margin: 0 0 12px;
+.comparisonChoice select {
+  max-width: 100%;
+  background: white;
+  color: #314b3a;
+  border-radius: 6px;
+  border: 1px solid #aabbaa;
+  padding: 7px;
 }
-.width-comparison > div {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(155px, 100%), 1fr));
-  gap: 10px;
-}
-.width-comparison figure {
+.comparisonCaption {
   margin: 0;
-  padding: 12px;
-  background: #fffdf5;
-  border: 1px solid #dedfcd;
-  border-radius: 10px;
-}
-.width-comparison svg {
-  width: 100%;
-  height: 70px;
-  display: block;
-}
-.width-comparison figcaption {
+  padding: 8px 0 5px;
   font-size: 12px;
   color: #405b50;
-  line-height: 1.6;
 }
-.width-comparison strong,
-.width-comparison small {
+.comparisonLane {
+  position: relative;
+}
+.comparisonObject {
+  position: absolute;
+  top: 0;
+}
+.comparisonObject svg {
+  width: 100%;
+  height: 100%;
   display: block;
-}
-.width-comparison strong {
-  font-size: 18px;
 }

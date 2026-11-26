@@ -4,7 +4,6 @@ import { LibraryBig, Ruler, Trash2 } from "lucide-react";
 import ProductArt from "./ProductArt.jsx";
 import { products } from "./catalog.js";
 import "./width.css";
-import WidthComparison from "./WidthComparison.jsx";
 
 const format = (n) => n.toLocaleString("ja-JP");
 
@@ -179,7 +178,6 @@ export default function WidthCalculator() {
                 "入力した棚幅を超える製品があります。"
               )}
             </p>
-            <WidthComparison total={total} />
           </>
         ) : (
           <p className="wcInvalid">数量は1〜99,999の整数で入力してください。</p>

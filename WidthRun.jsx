@@ -2,10 +2,22 @@ import React, { useLayoutEffect, useRef, useState } from "react";
 import ProductArt from "./ProductArt.jsx";
 import "./width-run.css";
 
-const scale = 0.34;
+import WidthComparison, { references } from "./WidthComparison.jsx";
 const format = (value) => value.toLocaleString("ja-JP");
 
 export default function WidthRun({ entries }) {
+  const total = entries.reduce((n, { p, qty }) => n + p.w * qty, 0);
+  const [choice, setChoice] = useState("auto");
+  const closest = references.reduce((a, b) =>
+    Math.abs(Math.log(total / a.width)) <= Math.abs(Math.log(total / b.width))
+      ? a
+      : b,
+  );
+  const reference = references.find((r) => r.kind === choice) ?? closest;
+  const scale = Math.min(
+    0.34,
+    180 / { paper: 297, desk: 700, bus: 3100, track: 9500 }[reference.kind],
+  );
   const viewport = useRef(null);
   const [view, setView] = useState({ width: 0, left: 0 });
   useLayoutEffect(() => {
@@ -31,6 +43,7 @@ export default function WidthRun({ entries }) {
     return group;
   });
   // Keep the scrollbar within browser layout limits, even for a run of millions of sets.
+  length = Math.max(length, reference.width * scale);
   const track = Math.min(length, 4000000);
   const left = Math.max(
     0,
@@ -59,6 +72,23 @@ export default function WidthRun({ entries }) {
   }
   return (
     <div className="widthRun">
+      <label className="comparisonChoice">
+        同じ縮尺で比較
+        <select
+          value={choice}
+          onChange={(event) => {
+            setChoice(event.target.value);
+            viewport.current.scrollLeft = 0;
+          }}
+        >
+          <option value="auto">自動（{closest.name}）</option>
+          {references.map((r) => (
+            <option key={r.kind} value={r.kind}>
+              {r.name}
+            </option>
+          ))}
+        </select>
+      </label>
       <div
         className="widthRunViewport"
         ref={viewport}
@@ -88,16 +118,27 @@ export default function WidthRun({ entries }) {
       >
         <div className="widthRunTrack" style={{ width: track }}>
           <div className="widthRunWindow" style={{ width: view.width }}>
-            {visible.map(({ index, p, x, width }) => (
-              <div
-                key={index}
-                data-position={index}
-                title={format(index) + "個目 " + p.name}
-                style={{ left: x, width, height: p.h * scale }}
-              >
-                <ProductArt product={p} spine />
-              </div>
-            ))}
+            <div
+              className="productLane"
+              style={{
+                height: Math.max(...entries.map(({ p }) => p.h)) * scale + 8,
+              }}
+            >
+              {visible.map(({ index, p, x, width }) => (
+                <div
+                  key={index}
+                  data-position={index}
+                  title={format(index) + "個目 " + p.name}
+                  style={{ left: x, width, height: p.h * scale }}
+                >
+                  <ProductArt product={p} spine />
+                </div>
+              ))}
+            </div>
+            <p className="comparisonCaption">
+              {reference.name} · {format(reference.width)} mm
+            </p>
+            <WidthComparison reference={reference} scale={scale} left={left} />
           </div>
         </div>
       </div>
